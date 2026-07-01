@@ -512,13 +512,41 @@ function initAuditorDashboard() {
                     const blob = new Blob([fileBytes], { type: att.mime_type });
                     const fileUrl = URL.createObjectURL(blob);
                     
-                    const fileLink = document.createElement("div");
-                    fileLink.className = "file-item";
-                    fileLink.innerHTML = `
-                        <span>📄 ${att.filename} (${(blob.size / 1024).toFixed(1)} KB)</span>
-                        <a href="${fileUrl}" download="${att.filename}" class="btn btn-secondary" style="padding:0.25rem 0.5rem; font-size:0.8rem">Descargar Evidencia</a>
+                    const fileContainer = document.createElement("div");
+                    fileContainer.style.cssText = "background: rgba(255, 255, 255, 0.02); border: 1px solid var(--border-color); padding: 1rem; border-radius: 8px; margin-bottom: 0.75rem; display: flex; flex-direction: column; gap: 0.75rem;";
+                    
+                    // Fila de información y descarga
+                    const infoRow = document.createElement("div");
+                    infoRow.style.cssText = "display: flex; justify-content: space-between; align-items: center; width: 100%;";
+                    
+                    let fileIcon = "📄";
+                    if (att.mime_type.startsWith("image/")) {
+                        fileIcon = "🖼️";
+                    } else if (att.mime_type === "application/pdf") {
+                        fileIcon = "📕";
+                    }
+                    
+                    infoRow.innerHTML = `
+                        <span style="font-weight: 500; font-size: 0.9rem; color: var(--text-main); display: flex; align-items: center; gap: 0.5rem;">
+                            <span>${fileIcon}</span> ${att.filename} (${(blob.size / 1024).toFixed(1)} KB)
+                        </span>
+                        <a href="${fileUrl}" download="${att.filename}" class="btn btn-secondary" style="padding: 0.25rem 0.75rem; font-size: 0.8rem; display: inline-flex; align-items: center; gap: 0.25rem; text-decoration: none;">
+                            <i class="fa-solid fa-download"></i> Descargar Evidencia
+                        </a>
                     `;
-                    decryptedFilesEl.appendChild(fileLink);
+                    fileContainer.appendChild(infoRow);
+                    
+                    // Si es una imagen, mostrar la vista previa (visualización)
+                    if (att.mime_type.startsWith("image/")) {
+                        const imgPreview = document.createElement("div");
+                        imgPreview.style.cssText = "margin-top: 0.25rem; border-radius: 6px; overflow: hidden; border: 1px solid rgba(255, 255, 255, 0.05); max-width: 100%; max-height: 400px; text-align: center; background: #0b0f19; padding: 0.5rem;";
+                        imgPreview.innerHTML = `
+                            <img src="${fileUrl}" alt="${att.filename}" style="max-width: 100%; max-height: 380px; width: auto; height: auto; object-fit: contain; border-radius: 4px; box-shadow: 0 4px 12px rgba(0,0,0,0.5); display: inline-block; vertical-align: middle;" />
+                        `;
+                        fileContainer.appendChild(imgPreview);
+                    }
+                    
+                    decryptedFilesEl.appendChild(fileContainer);
                 }
                 
                 if (currentCifradoReport.attachments.length === 0) {

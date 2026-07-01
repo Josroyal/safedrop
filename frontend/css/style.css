@@ -597,6 +597,8 @@ textarea.form-control {
     padding: 1rem;
     border-radius: 6px;
     overflow-x: auto;
+    word-break: break-all;
+    white-space: pre-wrap;
     border: 1px solid var(--border-color);
     color: var(--primary);
     max-height: 100px;

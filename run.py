@@ -28,7 +28,7 @@ check_dependencies()
 import uvicorn
 from backend.ssl_gen import generate_self_signed_cert
 from backend.crypto_utils import ensure_organizational_keys
-from backend.database import SessionLocal, init_db, User, add_audit_log
+from backend.database import SessionLocal, init_db, User, AuditLog, add_audit_log
 from backend.auth import get_password_hash
 
 def bootstrap_system():
