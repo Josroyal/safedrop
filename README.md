@@ -239,8 +239,6 @@ El script reportará paso a paso las llamadas HTTP, el cifrado/descifrado correc
 
 ## 12. Guía de Demostración en Vivo (Happy Path para la Presentación)
 
-Sigue este guión paso a paso durante tu defensa o demostración del proyecto para evidenciar ante el jurado el cumplimiento de todos los objetivos técnicos y de seguridad:
-
 ### Paso 1: Demostración de Seguridad en Tránsito y Contexto Seguro
 1. **Acción:** Abre el navegador en `https://localhost:8000`. Muestra la advertencia del certificado autofirmado, haz clic en opciones avanzadas y accede.
 2. **Explicación al Jurado:** *"Para asegurar la confidencialidad en tránsito frente a ataques de sniffing o Man-in-the-Middle en la red interna de la empresa, implementamos obligatoriedad de HTTPS. Esto es un requisito técnico indispensable, ya que los navegadores modernos restringen la API criptográfica nativa `window.crypto.subtle` únicamente a contextos seguros."*
