@@ -237,46 +237,30 @@ El script reportará paso a paso las llamadas HTTP, el cifrado/descifrado correc
 
 ---
 
-## 12. Guía de Demostración en Vivo (Happy Path para la Presentación)
+## 12. Guía de Uso y Flujos de Trabajo (System Walkthrough)
 
-### Paso 1: Demostración de Seguridad en Tránsito y Contexto Seguro
-1. **Acción:** Abre el navegador en `https://localhost:8000`. Muestra la advertencia del certificado autofirmado, haz clic en opciones avanzadas y accede.
-2. **Explicación al Jurado:** *"Para asegurar la confidencialidad en tránsito frente a ataques de sniffing o Man-in-the-Middle en la red interna de la empresa, implementamos obligatoriedad de HTTPS. Esto es un requisito técnico indispensable, ya que los navegadores modernos restringen la API criptográfica nativa `window.crypto.subtle` únicamente a contextos seguros."*
+Esta sección describe cómo utilizar e interactuar con los diferentes componentes de la plataforma para verificar su correcto funcionamiento y las medidas de seguridad implementadas.
 
-### Paso 2: Envío de Denuncia y Cifrado en Origen (Conocimiento Cero)
-1. **Acción:** 
-   - Escribe en la caja de texto: `"Prueba de reporte confidencial: Desvío de fondos detectado en el almacén B."`
-   - Arrastra o selecciona una imagen o documento PDF de prueba.
-   - Presiona F12 en tu navegador e ingresa a la pestaña **Red (Network)**.
-   - Haz clic en **Cifrar y Enviar Reporte de Forma Segura**.
-2. **Explicación al Jurado:** 
-   - Señala la pantalla: *"Al hacer clic, el navegador inicia un asistente criptográfico en local. Primero genera una llave simétrica AES-GCM de 256 bits aleatoria, cifra el texto y los archivos adjuntos con ella, luego descarga la llave pública RSA de la organización desde el servidor y encripta (envuelve) la llave AES con padding RSA-OAEP."*
-   - Abre la petición `submit` interceptada en la consola de Red de F12 y muestra el payload JSON: *"Miren la petición de red que viaja al backend. El texto plano no existe en tránsito. Solo viajan blobs en Base64 de los archivos cifrados, el IV aleatorio y la llave simétrica protegida por RSA. El servidor es un intermediario ciego."*
+### 12.1 Flujo del Informante (Envío de Denuncias)
+1. **Acceso Seguro (HTTPS):** Ingrese a `https://localhost:8000`. Al ser un entorno local, acepte la advertencia de certificado autofirmado para establecer la sesión HTTPS cifrada con TLS.
+2. **Redacción y Adjuntos:** Escriba los detalles del reporte en el formulario. Puede arrastrar o seleccionar archivos de prueba (como imágenes o documentos PDF).
+3. **Cifrado en el Cliente:** Haga clic en **Cifrar y Enviar Reporte de Forma Segura**.
+4. **Verificación Técnica (F12):**
+   - Si abre las herramientas de desarrollador del navegador (F12) y va a la pestaña **Red (Network)** antes de enviar, podrá inspeccionar la solicitud HTTP POST enviada al endpoint `/api/reports/submit`.
+   - El cuerpo de la solicitud JSON contiene los campos `report_text_encrypted`, `report_iv` y `encrypted_aes_key` en formato codificado Base64. Esto demuestra que ningún contenido en texto plano sale del cliente hacia la red.
 
-### Paso 3: Verificación de Datos en Reposo
-1. **Explicación al Jurado:** *"Si un atacante lograra comprometer el backend o robar una copia de la base de datos SQLite (`safedrop.db`), lo único que vería en las tablas `reports` y `attachments` son estos mismos bloques binarios cifrados. La información es inútil sin la llave privada de descifrado, la cual nunca se guarda en el servidor."*
+### 12.2 Flujo del Auditor (Descifrado Local)
+1. **Autenticación:** Ingrese a la sección **Auditoría** e inicie sesión con las credenciales del auditor (`auditor` / `SafeDropAuditor2026!`).
+2. **Examen de Bloques Cifrados:** Al seleccionar un reporte en la lista lateral, la interfaz mostrará los bloques de datos cifrados tal como residen en la base de datos (llave simétrica envuelta y payload cifrado).
+3. **Carga de Llave Privada (Cold Storage):**
+   - El sistema requiere que el auditor cargue el archivo de clave privada `organizacion_llave_privada.pem` (generado localmente en la raíz del proyecto durante la inicialización).
+   - Arrastre o seleccione el archivo `.pem` en la zona indicada.
+4. **Descifrado local:** Haga clic en **Descifrar Denuncia Localmente**. El navegador importará la llave RSA en memoria, descifrará la llave AES temporal y finalmente desencriptará el texto y los adjuntos, presentándolos en la interfaz. El descifrado se realiza al 100% en el cliente; la clave privada nunca se envía al backend.
 
-### Paso 4: Auditoría y Desencriptación Local (Cold Storage)
-1. **Acción:**
-   - Haz clic en **Auditoría** en el menú de navegación.
-   - Inicia sesión con: `auditor` / `SafeDropAuditor2026!`.
-   - Selecciona el reporte enviado en la barra lateral.
-   - Muestra cómo aparecen las cadenas cifradas en pantalla y el aviso de "Llave Privada Requerida".
-   - Arrastra o carga el archivo `organizacion_llave_privada.pem` generado en tu directorio local.
-   - Haz clic en **Descifrar Denuncia Localmente en el Navegador**.
-2. **Explicación al Jurado:** *"El backend nos entregó los datos cifrados porque el JWT validó que somos auditores. Sin embargo, el backend no descifra nada. Para leer el reporte, importamos la llave privada RSA en el navegador. La llave privada se lee estrictamente en memoria del cliente (RAM de JS), descifra la llave de sesión AES-GCM y procesa los datos en plano. Al refrescar la pestaña, la llave desaparece de memoria, garantizando principios de Cold Storage."*
-
-### Paso 5: Trazabilidad e Integridad Criptográfica de logs
-1. **Acción:**
-   - Haz clic en **Gestión** en el menú de navegación e ingresa como: `admin` / `SafeDropAdmin2026!`.
-   - Haz clic en **Verificar Integridad**. Muestra el banner verde de "INTEGRIDAD ASEGURADA".
-2. **Explicación al Jurado:** *"Cada acción crítica del sistema (logins, accesos, creaciones de usuarios y reportes) se registra en una bitácora inmutable. Cada log guarda el hash SHA-256 de su contenido y del registro anterior, formando una cadena de bloques. Esto previene que un administrador de base de datos malicioso borre logs históricos para encubrir un hackeo u operación indebida."*
-3. **Acción (El Momento WOW de la demo):**
-   - Haz clic en **Simular Ataque DB**. Explica que esto ejecuta una edición forzada directamente sobre SQLite, cambiando el detalle de un log histórico sin recalcular el hash de la cadena.
-   - Haz clic de nuevo en **Verificar Integridad**. Muestra el banner parpadeante en **rojo** que alerta `"¡ALERTA DE SEGURIDAD! CADENA COMPROMETIDA"` y señala la línea de tiempo donde el log alterado resalta en rojo con el estado `"✗ ALTERADO"`.
-4. **Explicación al Jurado:** *"Inmediatamente, la verificación matemática de la cadena detectó que los hashes recalculados no coinciden, exponiendo la manipulación inyectada directamente en el motor de base de datos SQLite."*
-
-### Paso 6: Informe Escrito Integrado y Reporte SAST
-1. **Acción:** Ve a la pestaña **Informe Escrito**.
-2. **Explicación al Jurado:** *"Finalmente, integramos de forma interactiva el informe escrito de ética y privacidad en la misma web app, junto con el reporte limpio del analizador de seguridad estática Bandit (SAST), demostrando el cumplimiento de los estándares de ciberseguridad exigidos."*
-
+### 12.3 Flujo del Administrador (Verificación y Simulación de Integridad)
+1. **Acceso:** Ingrese a la sección **Gestión** e inicie sesión con las credenciales del administrador (`admin` / `SafeDropAdmin2026!`).
+2. **Verificación de Bitácora:** Haga clic en **Verificar Integridad**. El sistema verificará de forma recursiva los hashes SHA-256 de todos los registros de auditoría y mostrará un estado de `"INTEGRIDAD ASEGURADA"` en verde.
+3. **Simulación de Manipulación de Base de Datos:**
+   - Haga clic en el botón **Simular Ataque DB**. Esta acción alterará directamente un registro histórico dentro de la tabla `audit_logs` de la base de datos SQLite sin recalcular su hash de encadenamiento.
+   - Presione nuevamente **Verificar Integridad**.
+   - El sistema detectará la alteración y presentará una alerta de seguridad parpadeante en rojo indicando `"¡ALERTA DE SEGURIDAD! CADENA COMPROMETIDA"`, resaltando el log alterado en la línea de tiempo. Esto demuestra la robustez del encadenamiento criptográfico.
