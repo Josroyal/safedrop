@@ -120,15 +120,16 @@
                             [Auditor (Navegador / Dispositivo Seguro)]<br>
                             &nbsp;&nbsp;│<br>
                             &nbsp;&nbsp;├── 7. Obtiene los bloques cifrados de la API (Autorizado por JWT).<br>
-                            &nbsp;&nbsp;├── 8. Carga la llave privada RSA en memoria local (desde USB externo).<br>
-                            &nbsp;&nbsp;├── 9. Descifra la llave AES usando la llave privada RSA en el navegador.<br>
-                            &nbsp;&nbsp;└── 10. Descifra y descarga el reporte y la evidencia en local.<br>
+                            &nbsp;&nbsp;├── 8. Carga al menos 2 fragmentos distintos (.share) de la llave privada RSA.<br>
+                            &nbsp;&nbsp;├── 9. Reconstruye la llave privada RSA en RAM mediante interpolación de Lagrange (Shamir's Secret Sharing).<br>
+                            &nbsp;&nbsp;└── 10. Descifra la llave AES y obtiene el reporte plano en local.<br>
                         </div>
                         
                         <h3>Especificaciones Técnicas:</h3>
                         <ul>
                             <li><strong>Cifrado Simétrico:</strong> AES-GCM (256-bit) con IVs aleatorios de 12 bytes por archivo/texto.</li>
                             <li><strong>Cifrado Asimétrico:</strong> RSA-OAEP con padding SHA-256 de 2048 bits.</li>
+                            <li><strong>División de Confianza:</strong> Shamir's Secret Sharing (2-of-3) sobre el Campo de Galois $GF(256)$ en JavaScript y Python.</li>
                             <li><strong>Derivación de Hash de Auditoría:</strong> SHA-256 encadenado secuencialmente.</li>
                             <li><strong>Protección de Credenciales de Acceso:</strong> Hashing de contraseñas mediante Argon2id.</li>
                         </ul>
@@ -218,7 +219,7 @@
                         <h2>7. Recomendaciones de Protección de Datos Futura</h2>
                         <p>Medidas altamente recomendables para versiones de producción avanzadas:</p>
                         <ol>
-                            <li><strong>Shamir's Secret Sharing (Esquema de Umbral):</strong> Fragmentar la llave privada RSA en <code>N</code> fragmentos distribuidos entre directores ejecutivos y auditores. Para descifrar las denuncias, se requeriría la presencia y carga de al menos <code>K</code> fragmentos simultáneamente (ej. 3 de 5 custodios), eliminando el punto único de fallo y el abuso de un solo auditor.</li>
+                            <li><strong>Esquemas de Firma Multiusuario y Multi-Nube:</strong> Dado que el prototipo actual ya implementa con éxito la división criptográfica de llave privada (Shamir's Secret Sharing 2-of-3) para evitar el descifrado unilateral, se recomienda a futuro automatizar la distribución de los fragmentos generados a través de servicios de almacenamiento cloud independientes (ej. AWS, Azure, Google Cloud) pertenecientes a distintas áreas administrativas.</li>
                             <li><strong>Módulos de Seguridad de Hardware (HSM):</strong> Almacenar la llave privada en un dispositivo criptográfico físico (como YubiKey o HSM en la nube) que impida la exportación de la llave y realice el descifrado dentro del chip seguro tras la autenticación multifactor.</li>
                             <li><strong>Firmas Criptográficas de Recibo:</strong> Entregar al denunciante un recibo firmado criptográficamente por la organización (usando la llave privada de la organización) para constatar de forma inmutable la recepción del reporte sin revelar su identidad.</li>
                         </ol>

@@ -107,6 +107,22 @@
                                 </table>
                             </div>
                         </div>
+
+                        <div class="glass-card">
+                            <h3><i class="fa-solid fa-download"></i> Contingencias y Copias de Seguridad (Backups)</h3>
+                            <p style="color:var(--text-muted); font-size:0.85rem; margin-top:0.25rem; margin-bottom:1rem">
+                                Cumpliendo con los procesos de contingencia y recuperación ante desastres o ciberataques, puede respaldar o restaurar la base de datos de denuncias (la cual se encuentra protegida en reposo).
+                            </p>
+                            <div style="display:flex; gap:0.75rem">
+                                <button id="btn-download-backup" class="btn btn-secondary" style="flex:1">
+                                    <i class="fa-solid fa-file-export"></i> Descargar Backup (.db)
+                                </button>
+                                <button id="btn-trigger-restore" class="btn btn-secondary" style="flex:1">
+                                    <i class="fa-solid fa-file-import"></i> Restaurar Backup (.db)
+                                </button>
+                            </div>
+                            <input type="file" id="restore-file-input" style="display:none" accept=".db">
+                        </div>
                     </div>
 
                     <!-- Columna Derecha: Trazabilidad y Criptografía de Logs -->

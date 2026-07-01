@@ -1,5 +1,5 @@
 import os
-from fastapi import FastAPI, Depends, HTTPException, status, Form
+from fastapi import FastAPI, Depends, HTTPException, status, Form, UploadFile, File
 from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import OAuth2PasswordRequestForm
@@ -355,6 +355,65 @@ def list_users(
     Lista todos los usuarios del sistema. Solo para Administradores.
     """
     return db.query(User).all()
+
+@app.get("/api/admin/backup")
+def download_backup(
+    current_user: User = Depends(RoleChecker(["admin"])),
+    db: Session = Depends(get_db)
+):
+    """
+    Descarga una copia de seguridad completa del archivo de base de datos SQLite.
+    """
+    from fastapi.responses import FileResponse
+    add_audit_log(
+        db,
+        action="DATABASE_BACKUP_DOWNLOADED",
+        user_id=current_user.id,
+        username=current_user.username,
+        details="El administrador descargó una copia de seguridad de la base de datos."
+    )
+    db_path = os.path.join(BASE_DIR, "safedrop.db")
+    return FileResponse(db_path, media_type="application/octet-stream", filename="safedrop_backup.db")
+
+@app.post("/api/admin/restore")
+async def restore_backup(
+    file: UploadFile = File(..., description="Archivo de base de datos .db para restaurar"),
+    current_user: User = Depends(RoleChecker(["admin"])),
+    db: Session = Depends(get_db)
+):
+    """
+    Restaura la base de datos reemplazando el archivo SQLite activo.
+    """
+    if not file.filename.endswith(".db"):
+        raise HTTPException(status_code=400, detail="Archivo inválido. Debe ser un archivo .db")
+        
+    try:
+        contents = await file.read()
+        db_path = os.path.join(BASE_DIR, "safedrop.db")
+        
+        # Cerrar conexiones activas de SQLAlchemy
+        from backend.database import engine, SessionLocal, init_db
+        engine.dispose()
+        
+        with open(db_path, "wb") as f:
+            f.write(contents)
+            
+        init_db()
+        
+        # Registrar restauración en la nueva base de datos
+        new_db = SessionLocal()
+        add_audit_log(
+            new_db,
+            action="DATABASE_RESTORED",
+            user_id=current_user.id,
+            username=current_user.username,
+            details=f"Base de datos restaurada desde el archivo '{file.filename}'."
+        )
+        new_db.close()
+        
+        return {"status": "success", "message": "Base de datos restaurada con éxito."}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error al restaurar base de datos: {str(e)}")
 
 # Montar archivos estáticos del frontend
 frontend_path = os.path.join(BASE_DIR, "frontend")

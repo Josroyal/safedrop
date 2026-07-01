@@ -6,6 +6,49 @@ from cryptography.hazmat.primitives.asymmetric import padding
 from cryptography.hazmat.primitives import hashes, serialization
 from cryptography.hazmat.primitives.ciphers.aead import AESGCM
 
+# ----------------- AUXILIARES DE SHAMIR'S SECRET SHARING -----------------
+def gf256_mul(a, b):
+    p = 0
+    for _ in range(8):
+        if b & 1:
+            p ^= a
+        carry = a & 0x80
+        a <<= 1
+        if carry:
+            a ^= 0x11d
+        b >>= 1
+    return p & 0xff
+
+def gf256_inv(b):
+    if b == 0:
+        return 0
+    for i in range(1, 256):
+        if gf256_mul(b, i) == 1:
+            return i
+    return 0
+
+def reconstruct_shamir(share_strings):
+    parsed = []
+    for s in share_strings:
+        parts = s.strip().split("-")
+        idx = int(parts[3])
+        data = base64.b64decode(parts[4])
+        parsed.append((idx, data))
+    
+    x1, y1 = parsed[0]
+    x2, y2 = parsed[1]
+    
+    diff = x2 ^ x1
+    inv_diff = gf256_inv(diff)
+    l1 = gf256_mul(x2, inv_diff)
+    l2 = gf256_mul(x1, inv_diff)
+    
+    reconstructed = bytearray()
+    for i in range(len(y1)):
+        val = gf256_mul(y1[i], l1) ^ gf256_mul(y2[i], l2)
+        reconstructed.append(val)
+    return bytes(reconstructed)
+
 # Desactivar advertencias de certificados autofirmados (SSL)
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
@@ -99,11 +142,16 @@ def test_integration():
         res.raise_for_status()
         report_data = res.json()
         
-        # Cargar llave privada del Administrador local
-        with open("organizacion_llave_privada.pem", "rb") as f:
-            priv_key_pem = f.read()
+        # Cargar dos fragmentos de llave (Shamir's Secret Sharing)
+        print("[*] Reconstruyendo la llave privada RSA combinando 2 fragmentos (.share)...")
+        with open("llave_privada_compartida_1.share", "r", encoding="utf-8") as f:
+            share1 = f.read()
+        with open("llave_privada_compartida_3.share", "r", encoding="utf-8") as f:
+            share2 = f.read()
             
+        priv_key_pem = reconstruct_shamir([share1, share2])
         rsa_private_key = serialization.load_pem_private_key(priv_key_pem, password=None)
+        print("[+] Llave privada RSA reconstruida correctamente en memoria del test.")
         
         # Desvolver la llave AES
         enc_aes_bytes = base64.b64decode(report_data["encrypted_aes_key"])

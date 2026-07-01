@@ -105,14 +105,15 @@
 
                                 <!-- Alerta del estado de la llave -->
                                 <div id="key-status-alert" class="alert alert-warning">
-                                    <strong>Llave Privada Requerida</strong> Cargue la llave privada para continuar.
+                                    <strong>Llave Privada Requerida (2-of-3 Shares)</strong> Cargue dos fragmentos diferentes para continuar.
                                 </div>
 
-                                <!-- Carga de llave privada PEM -->
+                                <!-- Carga de fragmentos de llave (.share) -->
                                 <div class="upload-zone" id="key-dropzone" style="padding:1.5rem; border-style:solid">
                                     <i class="fa-solid fa-key" style="font-size:1.5rem; color:var(--primary); margin-bottom:0.5rem"></i>
-                                    <h4 style="font-size:0.95rem">Arrastre o seleccione el archivo de llave privada (.pem)</h4>
-                                    <input type="file" id="key-file-input" style="display:none" accept=".pem">
+                                    <h4 style="font-size:0.95rem">Arrastre o seleccione fragmentos de llave (.share)</h4>
+                                    <p style="font-size:0.75rem; color:var(--text-muted); margin-top:0.25rem">Se requiere cargar al menos dos fragmentos distintos para reconstruir la llave RSA en el cliente.</p>
+                                    <input type="file" id="key-file-input" style="display:none" accept=".share">
                                 </div>
 
                                 <!-- Acción de descifrado -->

@@ -216,6 +216,7 @@ function initSubmissionPortal() {
 // --- CONTROLLER 2: PANEL DE AUDITORÍA (auditor.html) ---
 
 let loadedPrivateKeyRSA = null; // Guardada estrictamente en memoria temporal de JS
+let loadedShares = []; // Almacena los fragmentos (shares) cargados en memoria
 
 function initAuditorDashboard() {
     const loginForm = document.getElementById("login-form");
@@ -357,7 +358,7 @@ function initAuditorDashboard() {
         }
     }
     
-    // Arrastrar y soltar Llave Privada RSA
+    // Arrastrar y soltar Fragmentos de Llave (Shamir's Secret Sharing)
     if (keyDropzone) {
         keyDropzone.addEventListener("click", () => keyFileInput.click());
         keyDropzone.addEventListener("dragover", (e) => {
@@ -384,13 +385,35 @@ function initAuditorDashboard() {
         if (!file) return;
         const reader = new FileReader();
         reader.onload = async (e) => {
-            const pemText = e.target.result;
+            const fileContent = e.target.result.trim();
             try {
-                // Probar a importar la llave en local
-                loadedPrivateKeyRSA = await importarLlavePrivadaRSA(pemText);
+                if (!fileContent.startsWith("SD-SHARE-v1-")) {
+                    throw new Error("El archivo no es un fragmento de llave de SafeDrop válido.");
+                }
+                const parts = fileContent.split("-");
+                const shareId = parts[3];
+                
+                // Verificar si ya cargamos este ID
+                if (loadedShares.some(s => s.split("-")[3] === shareId)) {
+                    alert(`El fragmento #${shareId} ya ha sido cargado. Por favor cargue otro diferente.`);
+                    return;
+                }
+                
+                loadedShares.push(fileContent);
+                
+                if (loadedShares.length >= 2) {
+                    try {
+                        const reconstructedPem = reconstruirSecretShamir(loadedShares);
+                        loadedPrivateKeyRSA = await importarLlavePrivadaRSA(reconstructedPem);
+                    } catch (err) {
+                        alert("Error al reconstruir la llave privada. " + err.message);
+                        loadedShares = [];
+                        loadedPrivateKeyRSA = null;
+                    }
+                }
                 updateKeyStatusUI();
             } catch (err) {
-                alert("Llave privada inválida. Asegúrese de que sea una llave RSA en formato PEM (PKCS#8). " + err.message);
+                alert("Error al procesar el fragmento: " + err.message);
             }
         };
         reader.readAsText(file);
@@ -399,12 +422,47 @@ function initAuditorDashboard() {
     function updateKeyStatusUI() {
         if (loadedPrivateKeyRSA) {
             keyStatusAlert.className = "alert alert-success";
-            keyStatusAlert.innerHTML = "<strong>✓ Llave Privada RSA cargada en memoria.</strong> Lista para descifrar.";
+            keyStatusAlert.innerHTML = `
+                <div style="display:flex; justify-content:between; align-items:center; width:100%">
+                    <div><strong>✓ Llave Privada RSA Reconstruida (2/2 Fragmentos).</strong> Lista para descifrar en memoria local.</div>
+                    <button class="btn btn-secondary btn-sm" id="btn-clear-keys" style="margin-left:auto; padding:0.25rem 0.5rem; font-size:0.7rem">Limpiar Llaves</button>
+                </div>
+            `;
             keyDropzone.style.display = "none";
             decryptActionContainer.style.display = "block";
+            
+            // Añadir listener para limpiar
+            const btnClear = document.getElementById("btn-clear-keys");
+            if (btnClear) {
+                btnClear.addEventListener("click", () => {
+                    loadedPrivateKeyRSA = null;
+                    loadedShares = [];
+                    updateKeyStatusUI();
+                });
+            }
+        } else if (loadedShares.length === 1) {
+            const shareId = loadedShares[0].split("-")[3];
+            keyStatusAlert.className = "alert alert-warning";
+            keyStatusAlert.innerHTML = `
+                <div style="display:flex; justify-content:between; align-items:center; width:100%">
+                    <div><strong>⚠ 1/2 Fragmentos Cargados.</strong> Fragmento #${shareId} cargado en memoria. Cargue otro diferente para proceder.</div>
+                    <button class="btn btn-secondary btn-sm" id="btn-clear-keys" style="margin-left:auto; padding:0.25rem 0.5rem; font-size:0.7rem">Limpiar</button>
+                </div>
+            `;
+            keyDropzone.style.display = "block";
+            decryptActionContainer.style.display = "none";
+            
+            const btnClear = document.getElementById("btn-clear-keys");
+            if (btnClear) {
+                btnClear.addEventListener("click", () => {
+                    loadedPrivateKeyRSA = null;
+                    loadedShares = [];
+                    updateKeyStatusUI();
+                });
+            }
         } else {
             keyStatusAlert.className = "alert alert-warning";
-            keyStatusAlert.innerHTML = "<strong>⚠ Llave Privada Requerida.</strong> Cargue la llave privada de la organización (`organizacion_llave_privada.pem`) para descifrar esta denuncia localmente.";
+            keyStatusAlert.innerHTML = "<strong>⚠ Llave Privada Requerida (2-of-3 Shares).</strong> Cargue al menos dos fragmentos diferentes (`llave_privada_compartida_*.share`) para reconstruir la llave RSA en el cliente.";
             keyDropzone.style.display = "block";
             decryptActionContainer.style.display = "none";
         }
@@ -705,6 +763,66 @@ function initAdminDashboard() {
                 loadAuditLogs(); // Ver si la creación se registró
             } catch (err) {
                 alert(err.message);
+            }
+        });
+    }
+    
+    // Integración de Descarga y Restauración de Base de Datos
+    const btnDownloadBackup = document.getElementById("btn-download-backup");
+    if (btnDownloadBackup) {
+        btnDownloadBackup.addEventListener("click", async (e) => {
+            e.preventDefault();
+            try {
+                const token = sessionStorage.getItem("jwt_token");
+                const res = await fetch(`${API_BASE}/api/admin/backup`, {
+                    headers: { "Authorization": `Bearer ${token}` }
+                });
+                if (!res.ok) throw new Error("No autorizado para descargar el backup.");
+                const blob = await res.blob();
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement("a");
+                a.href = url;
+                a.download = "safedrop_backup.db";
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+            } catch (err) {
+                alert(err.message);
+            }
+        });
+    }
+    
+    const btnTriggerRestore = document.getElementById("btn-trigger-restore");
+    const restoreFileInput = document.getElementById("restore-file-input");
+    if (btnTriggerRestore && restoreFileInput) {
+        btnTriggerRestore.addEventListener("click", () => restoreFileInput.click());
+        restoreFileInput.addEventListener("change", async () => {
+            const file = restoreFileInput.files[0];
+            if (!file) return;
+            if (!confirm(`¿Está seguro de querer restaurar la base de datos? Se reemplazarán todos los datos activos con el backup '${file.name}'.`)) {
+                restoreFileInput.value = "";
+                return;
+            }
+            const formData = new FormData();
+            formData.append("file", file);
+            try {
+                const token = sessionStorage.getItem("jwt_token");
+                const res = await fetch(`${API_BASE}/api/admin/restore`, {
+                    method: "POST",
+                    headers: { "Authorization": `Bearer ${token}` },
+                    body: formData
+                });
+                if (!res.ok) {
+                    const data = await res.json();
+                    throw new Error(data.detail || "Error al restaurar base de datos.");
+                }
+                const data = await res.json();
+                alert(data.message);
+                window.location.reload();
+            } catch (err) {
+                alert(err.message);
+                restoreFileInput.value = "";
             }
         });
     }

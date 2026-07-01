@@ -237,3 +237,92 @@ async function descifrarArchivoBytes(aesKey, cipherTextBase64, ivBase64) {
         cipherTextBuffer
     );
 }
+
+// ----------------- ARITMÉTICA GF(256) Y RECONSTRUCCIÓN SHAMIR -----------------
+
+/**
+ * Multiplica dos números en el campo de Galois GF(256) usando
+ * el polinomio generador irreducible x^8 + x^4 + x^3 + x^2 + 1 (0x11d).
+ */
+function gf256_mul(a, b) {
+    let p = 0;
+    for (let i = 0; i < 8; i++) {
+        if (b & 1) {
+            p ^= a;
+        }
+        let carry = a & 0x80;
+        a <<= 1;
+        if (carry) {
+            a ^= 0x11d;
+        }
+        b >>= 1;
+    }
+    return p & 0xFF;
+}
+
+/**
+ * Encuentra la inversa multiplicativa de un número en GF(256)
+ */
+function gf256_inv(b) {
+    if (b === 0) return 0;
+    for (let i = 1; i < 256; i++) {
+        if (gf256_mul(b, i) === 1) {
+            return i;
+        }
+    }
+    return 0;
+}
+
+/**
+ * Reconstruye el secreto original (llave privada RSA PEM) combinando al menos 2 fragmentos (k=2, n=3).
+ * Cada fragmento viene formateado como: SD-SHARE-v1-[ID_FRAGMENTO]-[PAYLOAD_BASE64]
+ */
+function reconstruirSecretShamir(shareStrings) {
+    if (shareStrings.length < 2) {
+        throw new Error("Se requieren al menos 2 fragmentos para reconstruir el secreto.");
+    }
+    
+    // Parsear fragmentos
+    const parsedShares = [];
+    for (let shareStr of shareStrings) {
+        const cleaned = shareStr.trim();
+        const parts = cleaned.split("-");
+        // parts: ["SD", "SHARE", "v1", "[ID]", "[B64_DATA]"]
+        if (parts.length < 5 || parts[0] !== "SD" || parts[1] !== "SHARE" || parts[2] !== "v1") {
+            throw new Error("Formato de fragmento de llave privada inválido.");
+        }
+        const id = parseInt(parts[3], 10);
+        const yBytes = new Uint8Array(base64ToArrayBuffer(parts[4]));
+        parsedShares.push({ x: id, y: yBytes });
+    }
+    
+    const x1 = parsedShares[0].x;
+    const x2 = parsedShares[1].x;
+    const y1 = parsedShares[0].y;
+    const y2 = parsedShares[1].y;
+    
+    if (x1 === x2) {
+        throw new Error("Debe cargar dos fragmentos DIFERENTES.");
+    }
+    
+    if (y1.length !== y2.length) {
+        throw new Error("Los fragmentos corresponden a llaves diferentes o están corruptos.");
+    }
+    
+    // Calcular coeficientes de Lagrange en x=0 para k=2:
+    // l1 = x2 / (x2 ^ x1)
+    // l2 = x1 / (x1 ^ x2)
+    const diff = x2 ^ x1;
+    const invDiff = gf256_inv(diff);
+    const l1 = gf256_mul(x2, invDiff);
+    const l2 = gf256_mul(x1, invDiff);
+    
+    const len = y1.length;
+    const secretBytes = new Uint8Array(len);
+    for (let i = 0; i < len; i++) {
+        // S_i = f(0) = (y1 * l1) ^ (y2 * l2)
+        secretBytes[i] = gf256_mul(y1[i], l1) ^ gf256_mul(y2[i], l2);
+    }
+    
+    return new TextDecoder().decode(secretBytes);
+}

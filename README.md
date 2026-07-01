@@ -76,9 +76,9 @@ RSA es computacionalmente costoso para cifrar grandes volúmenes de datos. Por e
                              [LLAVE PÚBLICA] ────────► [LLAVE AES ENVUELTA] ─┘
 ```
 
-### 3.4 Separación de Privilegios y Cold Storage
-La llave privada RSA necesaria para romper el cifrado de las denuncias no se almacena en el servidor. El administrador descarga esta llave en la inicialización inicial del sistema y la resguarda físicamente (ej. en un USB seguro). 
-Cuando un auditor necesita revisar un reporte, carga temporalmente la llave privada en su navegador. La llave reside estrictamente en la memoria RAM de JavaScript del cliente y desaparece inmediatamente al cerrar o refrescar la pestaña.
+### 3.4 Separación de Privilegios y Shamir's Secret Sharing (Cold Storage)
+La llave privada RSA necesaria para romper el cifrado de las denuncias no se almacena en el servidor. Para evitar la centralización de confianza en un único auditor, la llave privada se divide inmediatamente al generarse mediante **Shamir's Secret Sharing (2-of-3)** en 3 fragmentos (`llave_privada_compartida_*.share`).
+La llave privada original completa es eliminada del servidor de forma permanente. Para descifrar cualquier reporte, el auditor debe cargar al menos **dos fragmentos diferentes** en la interfaz. El navegador realiza la interpolación de Lagrange en memoria local para reconstruir la llave RSA, la usa para descifrar y la destruye inmediatamente después.
 
 ---
 
@@ -131,8 +131,8 @@ La ética de datos dicta que el diseño de sistemas de denuncias debe priorizar 
 ## 7. Recomendaciones de Protección de Datos Futura
 
 Para implementaciones de producción a escala empresarial, se proponen las siguientes mejoras:
-1. **Shamir's Secret Sharing Scheme (SSSS):** Dividir la llave privada RSA en 5 fragmentos criptográficos distribuidos entre 5 custodios diferentes. Para descifrar las denuncias, se requeriría la presencia obligatoria de al menos 3 de ellos para reconstruir la llave privada temporalmente, evitando el abuso de poder por parte de un solo auditor.
-2. **Módulo de Seguridad de Hardware (HSM) e Integración con YubiKeys:** Almacenar de manera inexportable las llaves RSA corporativas en un chip criptográfico seguro (HSM) y firmar las denuncias con YubiKeys físicas multifactor.
+1. **Esquemas de Firma y Gestión de Llaves Multi-Custodio (Multi-Nube):** Dado que el sistema ya implementa la división de llave privada RSA (Shamir's Secret Sharing 2-of-3) en local, se recomienda automatizar a futuro la distribución y almacenamiento de los fragmentos en nubes de almacenamiento independientes (ej. AWS KMS, Azure Key Vault, Google Cloud KMS) administradas bajo políticas de control de acceso estrictas.
+2. **Módulo de Seguridad de Hardware (HSM) e Integración con YubiKeys:** Almacenar de manera inexportable las llaves RSA corporativas en un chip criptográfico seguro (HSM) y realizar el descifrado de llaves AES mediante firmas físicas multifactor.
 3. **Pruebas de Conocimiento Cero (ZKP) avanzadas:** Incorporar pruebas criptográficas de que un reporte fue enviado sin revelar en absoluto metadatos de red (ej. zk-SNARKs).
 
 ---

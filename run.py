@@ -46,24 +46,32 @@ def bootstrap_system():
     init_db()
     
     # 3. Asegurar llaves RSA organizacionales
-    # Si retorna bytes, significa que se crearon por primera vez
-    private_key_pem = ensure_organizational_keys()
+    # Si retorna un diccionario, significa que se crearon por primera vez (shares)
+    shares = ensure_organizational_keys()
     
-    if private_key_pem:
-        # Guardar la llave privada localmente sólo una vez para el Administrador
-        priv_key_filename = "organizacion_llave_privada.pem"
-        with open(priv_key_filename, "wb") as f:
-            f.write(private_key_pem)
+    if shares:
+        # Borrar llave privada completa antigua si existiera
+        if os.path.exists("organizacion_llave_privada.pem"):
+            os.remove("organizacion_llave_privada.pem")
             
+        # Guardar cada uno de los 3 fragmentos localmente para el Administrador
+        for idx, share_content in shares.items():
+            share_filename = f"llave_privada_compartida_{idx}.share"
+            with open(share_filename, "w", encoding="utf-8") as f:
+                f.write(share_content)
+                
         print("+" * 60)
-        print("  ¡ALERTA DE SEGURIDAD - CONFIGURACIÓN INICIAL!")
-        print(f"  Se ha generado la llave privada RSA para descifrar denuncias.")
-        print(f"  Archivo creado localmente: {os.path.abspath(priv_key_filename)}")
+        print("  ¡ALERTA DE SEGURIDAD - SHAMIR'S SECRET SHARING INICIALIZADO!")
+        print("  Se ha generado la llave privada RSA e inmediatamente se ha dividido")
+        print("  en 3 fragmentos (shares) en los archivos locales:")
+        print("  - llave_privada_compartida_1.share (Auditor A)")
+        print("  - llave_privada_compartida_2.share (Auditor B)")
+        print("  - llave_privada_compartida_3.share (Custodio C)")
         print("  ")
         print("  INDICACIONES PARA LA AUDITORÍA:")
-        print("  1. Guarde este archivo en un USB o carpeta fuera de este servidor.")
+        print("  1. Reparta los fragmentos a diferentes custodios.")
         print("  2. Para descifrar las denuncias en el Panel de Auditoría,")
-        print("     deberá cargar este archivo en la interfaz del navegador.")
+        print("     se requerirá cargar al menos DOS fragmentos distintos.")
         print("+" * 60)
         
     # 4. Crear usuarios por defecto si no existen
