@@ -1,0 +1,16 @@
+# Bandit configuration file for SafeDrop Local
+profiles:
+    all:
+        include:
+            - any_other_checks_here
+        exclude:
+            # We exclude self-signed cert generation warnings (B501, B101, etc.) if applicable,
+            # but keep it general to perform all security checks.
+            - B501  # We know HTTPS uses self-signed certificates in dev mode
+
+# Files/folders to exclude from scanning
+exclude_dirs:
+    - .git
+    - .pytest_cache
+    - venv
+    - env

@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SafeDrop Local - Control de Administración y Auditoría</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+
+    <div class="app-container">
+        <!-- Navegación Compartida -->
+        <header>
+            <div class="nav-container">
+                <a href="index.html" class="logo">
+                    <i class="fa-solid fa-shield-halved logo-shield"></i>
+                    <span>SafeDrop Local</span>
+                </a>
+                <nav style="display:flex; align-items:center; gap:1.5rem">
+                    <ul class="nav-menu">
+                        <li><a href="index.html" class="nav-link"><i class="fa-solid fa-paper-plane"></i> Enviar Reporte</a></li>
+                        <li><a href="auditor.html" class="nav-link"><i class="fa-solid fa-unlock-keyhole"></i> Auditoría</a></li>
+                        <li><a href="admin.html" class="nav-link active"><i class="fa-solid fa-gears"></i> Gestión</a></li>
+                        <li><a href="docs.html" class="nav-link"><i class="fa-solid fa-file-invoice"></i> Informe Escrito</a></li>
+                    </ul>
+                    <div id="session-info"></div>
+                </nav>
+            </div>
+        </header>
+
+        <main class="content-area">
+            <!-- Formulario de Login (Si no está logueado) -->
+            <div id="login-form" style="max-width:450px; margin: 4rem auto; display:none">
+                <div class="glass-card">
+                    <div style="text-align:center; margin-bottom:2rem">
+                        <i class="fa-solid fa-screwdriver-wrench" style="font-size:2.5rem; color:var(--primary); margin-bottom:1rem"></i>
+                        <h2>Acceso Administrador</h2>
+                        <p style="color:var(--text-muted); font-size:0.9rem">Ingrese con su cuenta administrativa del sistema.</p>
+                    </div>
+                    <form>
+                        <div class="form-group">
+                            <label class="form-label" for="login-username">Usuario Administrador</label>
+                            <input type="text" id="login-username" class="form-control" placeholder="admin" required>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" for="login-password">Contraseña</label>
+                            <input type="password" id="login-password" class="form-control" placeholder="Contraseña de administrador" required>
+                        </div>
+                        <button type="submit" class="btn btn-primary btn-block">
+                            Ingresar al Panel
+                        </button>
+                    </form>
+                    <div style="margin-top:1.5rem; font-size:0.8rem; color:var(--text-muted); text-align:center">
+                        Contraseñas de demostración por defecto: <br>
+                        Admin: <strong>admin</strong> / <strong>SafeDropAdmin2026!</strong>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Panel de Administración -->
+            <div id="admin-panel" class="section">
+                <div class="grid-2">
+                    
+                    <!-- Columna Izquierda: Gestión de Usuarios RBAC -->
+                    <div>
+                        <h1>Gestión de Accesos (RBAC)</h1>
+                        <p class="subtitle">Administre los usuarios con privilegios de Auditor y Administrador del sistema.</p>
+                        
+                        <div class="glass-card">
+                            <h3><i class="fa-solid fa-user-plus"></i> Crear Nuevo Usuario</h3>
+                            <form id="create-user-form" style="margin-top:1rem">
+                                <div class="form-group">
+                                    <label class="form-label" for="new-username">Nombre de Usuario</label>
+                                    <input type="text" id="new-username" class="form-control" required placeholder="Ej. lhuaman">
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label" for="new-password">Contraseña</label>
+                                    <input type="password" id="new-password" class="form-control" required placeholder="Contraseña segura">
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label" for="new-role">Rol de Usuario</label>
+                                    <select id="new-role" class="form-control">
+                                        <option value="auditor">Auditor (Acceso a descifrar denuncias)</option>
+                                        <option value="admin">Administrador (Gestión e integridad de bitácora)</option>
+                                    </select>
+                                </div>
+                                <button type="submit" class="btn btn-primary btn-block">Crear Usuario Autorizado</button>
+                            </form>
+                        </div>
+
+                        <div class="glass-card">
+                            <h3><i class="fa-solid fa-users"></i> Usuarios del Sistema</h3>
+                            <div style="overflow-x:auto; margin-top:1rem">
+                                <table style="width:100%; border-collapse:collapse; text-align:left">
+                                    <thead>
+                                        <tr style="border-bottom:1px solid var(--border-color)">
+                                            <th style="padding:0.75rem 1rem; color:var(--text-muted); font-size:0.85rem">ID</th>
+                                            <th style="padding:0.75rem 1rem; color:var(--text-muted); font-size:0.85rem">USUARIO</th>
+                                            <th style="padding:0.75rem 1rem; color:var(--text-muted); font-size:0.85rem">ROL</th>
+                                            <th style="padding:0.75rem 1rem; color:var(--text-muted); font-size:0.85rem">ESTADO</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="user-list">
+                                        <!-- Cargado dinámicamente -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Columna Derecha: Trazabilidad y Criptografía de Logs -->
+                    <div>
+                        <h1>Integridad de Bitácora de Auditoría</h1>
+                        <p class="subtitle">Compruebe y valide la cadena criptográfica encadenada por hashes SHA-256.</p>
+                        
+                        <!-- Tarjeta de Estado de Integridad -->
+                        <div id="integrity-card" class="alert alert-success">
+                            Cargando estado de la bitácora...
+                        </div>
+
+                        <div class="glass-card" style="padding:1.5rem">
+                            <div style="display:flex; gap:0.75rem; margin-bottom:1.5rem">
+                                <button class="btn btn-success" id="btn-verify-integrity" style="flex:1">
+                                    <i class="fa-solid fa-arrows-rotate"></i> Verificar Integridad
+                                </button>
+                                <button class="btn btn-danger" id="btn-simulate-tampering" style="flex:1">
+                                    <i class="fa-solid fa-bug"></i> Simular Ataque DB
+                                </button>
+                            </div>
+
+                            <h3><i class="fa-solid fa-clock-rotate-left"></i> Historial de Actividad</h3>
+                            <div class="timeline" id="timeline">
+                                <!-- Línea de tiempo de logs cargada dinámicamente -->
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </main>
+
+        <footer>
+            SafeDrop Local • Curso: Ética y Seguridad de Datos (DS3031) • Proyecto Final Tipo 2
+        </footer>
+    </div>
+
+    <!-- Scripts -->
+    <script src="js/crypto_client.js"></script>
+    <script src="js/app_client.js"></script>
+</body>
+</html>

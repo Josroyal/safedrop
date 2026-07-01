@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SafeDrop Local - Buzón de Denuncias Anónimas Seguro</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+
+    <div class="app-container">
+        <!-- Navegación Compartida -->
+        <header>
+            <div class="nav-container">
+                <a href="index.html" class="logo">
+                    <i class="fa-solid fa-shield-halved logo-shield"></i>
+                    <span>SafeDrop Local</span>
+                </a>
+                <nav>
+                    <ul class="nav-menu">
+                        <li><a href="index.html" class="nav-link active"><i class="fa-solid fa-paper-plane"></i> Enviar Reporte</a></li>
+                        <li><a href="auditor.html" class="nav-link"><i class="fa-solid fa-unlock-keyhole"></i> Auditoría</a></li>
+                        <li><a href="admin.html" class="nav-link"><i class="fa-solid fa-gears"></i> Gestión</a></li>
+                        <li><a href="docs.html" class="nav-link"><i class="fa-solid fa-file-invoice"></i> Informe Escrito</a></li>
+                    </ul>
+                </nav>
+            </div>
+        </header>
+
+        <!-- Contenido de Envío -->
+        <main class="content-area">
+            <div class="grid-2">
+                
+                <!-- Columna Izquierda: Formulario -->
+                <div>
+                    <h1>Enviar Denuncia Confidencial</h1>
+                    <p class="subtitle">Reporte incidentes, fraudes o malas prácticas de forma 100% anónima con cifrado híbrido en el origen.</p>
+                    
+                    <div id="alert-container"></div>
+                    
+                    <div class="glass-card">
+                        <form id="report-form">
+                            <div class="form-group">
+                                <label class="form-label" for="report-text"><i class="fa-solid fa-paragraph"></i> Detalles de la Denuncia</label>
+                                <textarea id="report-text" class="form-control" placeholder="Escriba los hechos detalladamente de la forma más clara posible. Evite incluir su nombre o datos personales que puedan revelar indirectamente su identidad..."></textarea>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label class="form-label"><i class="fa-solid fa-paperclip"></i> Adjuntar Evidencias (Documentos, Capturas de pantalla, etc.)</label>
+                                <div class="upload-zone" id="upload-zone">
+                                    <div class="upload-icon"><i class="fa-solid fa-cloud-arrow-up"></i></div>
+                                    <h3>Arrastra archivos aquí o haz clic para subir</h3>
+                                    <p style="color:var(--text-muted); font-size:0.85rem; margin-top:0.25rem">Cualquier archivo adjunto se cifrará localmente con AES-GCM 256-bit.</p>
+                                    <input type="file" id="file-input" style="display:none" multiple>
+                                </div>
+                                <div class="file-list" id="file-list"></div>
+                            </div>
+                            
+                            <button type="submit" class="btn btn-primary btn-block" style="padding:1rem">
+                                <i class="fa-solid fa-lock"></i> Cifrar y Enviar Reporte de Forma Segura
+                            </button>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- Columna Derecha: Explicación de Seguridad -->
+                <div style="padding-top:1.5rem">
+                    <div class="glass-card" style="border-left: 4px solid var(--primary)">
+                        <h2 style="font-size:1.4rem; color:var(--text-main); margin-bottom:1rem">
+                            <i class="fa-solid fa-user-secret" style="color:var(--primary)"></i> Privacidad Absoluta por Arquitectura
+                        </h2>
+                        <p style="color:var(--text-muted); font-size:0.95rem; margin-bottom:1.5rem">
+                            A diferencia de los buzones tradicionales, en <strong>SafeDrop Local</strong> el servidor es un intermediario ciego. Su reporte se cifra antes de salir de su equipo.
+                        </p>
+                        
+                        <div style="display:flex; flex-direction:column; gap:1.25rem">
+                            <div style="display:flex; gap:1rem; align-items:flex-start">
+                                <div style="color:var(--primary); font-size:1.25rem"><i class="fa-solid fa-key"></i></div>
+                                <div>
+                                    <h4 style="font-size:0.95rem; margin-bottom:0.15rem">Cifrado de Origen (Zero-Knowledge)</h4>
+                                    <p style="color:var(--text-muted); font-size:0.85rem">El navegador genera una llave AES-GCM única para cifrar el texto y los archivos adjuntos. El servidor nunca recibe el texto plano.</p>
+                                </div>
+                            </div>
+                            
+                            <div style="display:flex; gap:1rem; align-items:flex-start">
+                                <div style="color:var(--success); font-size:1.25rem"><i class="fa-solid fa-arrows-spin"></i></div>
+                                <div>
+                                    <h4 style="font-size:0.95rem; margin-bottom:0.15rem">Criptografía Híbrida</h4>
+                                    <p style="color:var(--text-muted); font-size:0.85rem">La llave AES temporal es cifrada utilizando la llave pública RSA de la organización y se transmite envuelta criptográficamente.</p>
+                                </div>
+                            </div>
+                            
+                            <div style="display:flex; gap:1rem; align-items:flex-start">
+                                <div style="color:var(--warning); font-size:1.25rem"><i class="fa-solid fa-hard-drive"></i></div>
+                                <div>
+                                    <h4 style="font-size:0.95rem; margin-bottom:0.15rem">Almacenamiento de Llaves Seguras (Cold Storage)</h4>
+                                    <p style="color:var(--text-muted); font-size:0.85rem">La llave privada RSA de descifrado no reside en el servidor de la base de datos, eliminando la posibilidad de que administradores internos accedan a los datos.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </main>
+
+        <!-- Overlay de Operación de Cifrado -->
+        <div class="crypto-overlay" id="crypto-overlay">
+            <div class="crypto-card glass-card">
+                <div class="crypto-animation">
+                    <div class="crypto-circle"></div>
+                </div>
+                <h2>Cifrado de Conocimiento Cero Activo</h2>
+                <p style="color:var(--text-muted); font-size:0.9rem">Procesando criptografía en el lado del cliente...</p>
+                <ul class="crypto-steps">
+                    <li class="crypto-step">Generando llave simétrica temporal AES-256...</li>
+                    <li class="crypto-step">Cifrando texto del reporte y archivos adjuntos...</li>
+                    <li class="crypto-step">Protegiendo llave AES con llave pública RSA organizacional...</li>
+                    <li class="crypto-step">Transmitiendo datos cifrados de forma segura bajo protocolo TLS...</li>
+                </ul>
+            </div>
+        </div>
+
+        <footer>
+            SafeDrop Local • Curso: Ética y Seguridad de Datos (DS3031) • Proyecto Final Tipo 2
+        </footer>
+    </div>
+
+    <!-- Scripts -->
+    <script src="js/crypto_client.js"></script>
+    <script src="js/app_client.js"></script>
+</body>
+</html>
