@@ -590,6 +590,64 @@ function initAdminDashboard() {
     const btnTamper = document.getElementById("btn-simulate-tampering");
     const createUserForm = document.getElementById("create-user-form");
     
+    // Elementos de Pestañas
+    const tabVisual = document.getElementById("tab-visual");
+    const tabText = document.getElementById("tab-text");
+    const panelVisual = document.getElementById("panel-visual-graph");
+    const panelText = document.getElementById("panel-text-timeline");
+    
+    let globalAuditLogs = [];
+    let activeFilter = "all";
+    
+    // Sincronizar scroll entre columnas del grafo y las tarjetas
+    const graphContainer = document.getElementById("audit-graph-container");
+    const cardsContainer = document.getElementById("audit-cards-container");
+    if (graphContainer && cardsContainer) {
+        cardsContainer.addEventListener("scroll", () => {
+            graphContainer.scrollTop = cardsContainer.scrollTop;
+        });
+    }
+    
+    if (tabVisual && tabText && panelVisual && panelText) {
+        tabVisual.addEventListener("click", () => {
+            tabVisual.classList.add("active");
+            tabText.classList.remove("active");
+            panelVisual.style.display = "block";
+            panelText.style.display = "none";
+            // Redibujar el SVG al cambiar de pestaña para alinear posiciones
+            setTimeout(() => {
+                if (globalAuditLogs.length > 0) {
+                    renderAuditGraphTailwind();
+                }
+            }, 50);
+        });
+        
+        tabText.addEventListener("click", () => {
+            tabText.classList.add("active");
+            tabVisual.classList.remove("active");
+            panelText.style.display = "block";
+            panelVisual.style.display = "none";
+        });
+    }
+    
+    // Filtros de Auditoría
+    const filterBtnGroup = document.getElementById("filter-btn-group");
+    if (filterBtnGroup) {
+        filterBtnGroup.querySelectorAll(".filter-btn").forEach(btn => {
+            btn.addEventListener("click", () => {
+                filterBtnGroup.querySelectorAll(".filter-btn").forEach(b => {
+                    b.classList.remove("active", "bg-blue-500/10", "text-blue-400", "border-blue-500/20");
+                    b.classList.add("bg-gray-800", "text-gray-400", "border-transparent");
+                });
+                btn.classList.add("active", "bg-blue-500/10", "text-blue-400", "border-blue-500/20");
+                btn.classList.remove("bg-gray-800", "text-gray-400", "border-transparent");
+                
+                activeFilter = btn.dataset.filter;
+                renderAuditGraphTailwind();
+            });
+        });
+    }
+    
     const token = sessionStorage.getItem("jwt_token");
     const role = sessionStorage.getItem("role");
     
@@ -655,9 +713,18 @@ function initAdminDashboard() {
             if (!res.ok) throw new Error("Error al obtener la bitácora.");
             
             const data = await res.json();
-            renderAuditLogs(data.integrity_intact, data.logs);
+            globalAuditLogs = data.logs; // Guardar en caché local para filtros
+            
+            // Invertir el orden de los logs para mostrar los más recientes arriba en la lista de texto
+            renderAuditLogs(data.integrity_intact, data.logs.slice().reverse());
+            // Generar la bitácora visual interactiva híbrida
+            renderAuditGraphTailwind();
         } catch (err) {
             timelineEl.innerHTML = `<div class='alert alert-danger'>${err.message}</div>`;
+            const cardsContainer = document.getElementById("audit-cards-container");
+            if (cardsContainer) {
+                cardsContainer.innerHTML = `<div class='alert alert-danger'>${err.message}</div>`;
+            }
         }
     }
     
@@ -671,6 +738,7 @@ function initAdminDashboard() {
                     <p style="font-size:0.95rem; margin:0">Todos los hashes de la bitácora de auditoría son válidos y la cadena de bloques SHA-256 no presenta ninguna alteración.</p>
                 </div>
             `;
+            integrityCard.style.animation = ""; // Remover animación
         } else {
             integrityCard.className = "alert alert-danger";
             integrityCard.innerHTML = `
@@ -710,6 +778,387 @@ function initAdminDashboard() {
             `;
             timelineEl.appendChild(item);
         });
+    }
+    
+    // Panel de detalles expandible de commits
+    window.toggleCommitDetails = function(id) {
+        const pane = document.getElementById(`details-${id}`);
+        const arrow = document.getElementById(`arrow-${id}`);
+        const text = document.getElementById(`btn-text-${id}`);
+        if (!pane) return;
+        
+        const isOpen = pane.classList.contains("open");
+        if (isOpen) {
+            pane.classList.remove("open");
+            if (arrow) arrow.style.transform = "rotate(0deg)";
+            if (text) text.textContent = "Verificar";
+        } else {
+            pane.classList.add("open");
+            if (arrow) arrow.style.transform = "rotate(180deg)";
+            if (text) text.textContent = "Ocultar";
+        }
+        
+        // Recalcular posiciones del SVG después de la transición de altura
+        setTimeout(() => {
+            const container = document.getElementById("audit-cards-container");
+            if (container) {
+                // Obtener logs del estado filtrado actual
+                let filteredLogs = globalAuditLogs;
+                if (activeFilter === "system") {
+                    filteredLogs = globalAuditLogs.filter(log => log.username !== "admin" && log.username !== "auditor");
+                } else if (activeFilter === "admin") {
+                    filteredLogs = globalAuditLogs.filter(log => log.username === "admin");
+                } else if (activeFilter === "auditor") {
+                    filteredLogs = globalAuditLogs.filter(log => log.username === "auditor");
+                } else if (activeFilter === "compromised") {
+                    filteredLogs = globalAuditLogs.filter(log => !log.is_valid);
+                }
+                updateGraphSVG(filteredLogs.slice().reverse());
+            }
+        }, 320);
+    };
+    
+    function renderAuditGraphTailwind() {
+        const cardsContainer = document.getElementById("audit-cards-container");
+        const graphContainer = document.getElementById("audit-graph-container");
+        const tooltip = document.getElementById("audit-tooltip");
+        if (!cardsContainer || !graphContainer || !tooltip) return;
+        
+        cardsContainer.innerHTML = "";
+        graphContainer.innerHTML = "";
+        
+        // Filtrar logs según selección activa
+        let filteredLogs = globalAuditLogs;
+        if (activeFilter === "system") {
+            filteredLogs = globalAuditLogs.filter(log => log.username !== "admin" && log.username !== "auditor");
+        } else if (activeFilter === "admin") {
+            filteredLogs = globalAuditLogs.filter(log => log.username === "admin");
+        } else if (activeFilter === "auditor") {
+            filteredLogs = globalAuditLogs.filter(log => log.username === "auditor");
+        } else if (activeFilter === "compromised") {
+            filteredLogs = globalAuditLogs.filter(log => !log.is_valid);
+        }
+        
+        // Mostrar de más recientes (arriba) a más antiguas
+        const displayLogs = filteredLogs.slice().reverse();
+        const N = displayLogs.length;
+        
+        if (N === 0) {
+            cardsContainer.innerHTML = "<div class='text-gray-500 text-center py-16 text-xs'><i class='fa-solid fa-folder-open text-2xl mb-2 block text-gray-600'></i>No se encontraron registros coincidentes.</div>";
+            return;
+        }
+        
+        // Renderizar cada fila
+        displayLogs.forEach(log => {
+            const cardRow = document.createElement("div");
+            
+            // Icono por tipo de acción
+            let iconHtml = '<i class="fa-solid fa-cube text-blue-400"></i>';
+            if (log.action.includes("USER_CREATED")) {
+                iconHtml = '<i class="fa-solid fa-user-plus text-emerald-400"></i>';
+            } else if (log.action.includes("REPORT_SUBMITTED")) {
+                iconHtml = '<i class="fa-solid fa-file-shield text-sky-400"></i>';
+            } else if (log.action.includes("DECRYPT_SUCCESS")) {
+                iconHtml = '<i class="fa-solid fa-unlock-keyhole text-purple-400"></i>';
+            } else if (log.action.includes("AUDIT_TRAIL_VERIFIED")) {
+                iconHtml = '<i class="fa-solid fa-shield-check text-indigo-400"></i>';
+            } else if (log.action.includes("DATABASE_BACKUP")) {
+                iconHtml = '<i class="fa-solid fa-database text-amber-400"></i>';
+            } else if (log.action.includes("DATABASE_RESTORE")) {
+                iconHtml = '<i class="fa-solid fa-rotate-left text-orange-400"></i>';
+            } else if (log.action.includes("TAMPER")) {
+                iconHtml = '<i class="fa-solid fa-triangle-exclamation text-red-500"></i>';
+            }
+            
+            // Badge de rol
+            let roleBadge = '<span class="px-2 py-0.5 rounded text-[9px] font-semibold bg-blue-500/10 text-blue-400 border border-blue-500/20">SISTEMA</span>';
+            if (log.username === "admin") {
+                roleBadge = '<span class="px-2 py-0.5 rounded text-[9px] font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">ADMIN</span>';
+            } else if (log.username === "auditor") {
+                roleBadge = '<span class="px-2 py-0.5 rounded text-[9px] font-semibold bg-purple-500/10 text-purple-400 border border-purple-500/20">AUDITOR</span>';
+            }
+            
+            // Estado de integridad
+            const statusBadge = log.is_valid
+                ? '<span class="text-[10px] text-emerald-400 font-semibold flex items-center gap-1"><i class="fa-solid fa-circle-check"></i> Íntegro</span>'
+                : '<span class="text-[10px] text-red-400 font-bold flex items-center gap-1 animate-pulse"><i class="fa-solid fa-triangle-exclamation"></i> ALTERADO</span>';
+                
+            const hashPill = `<span class="font-mono text-[9px] text-gray-400 bg-gray-900 border border-gray-800 rounded px-1.5 py-0.5 select-all">sha256:${log.current_hash.substring(0, 8)}...</span>`;
+            
+            cardRow.innerHTML = `
+                <div class="commit-card rounded-xl p-4 flex flex-col justify-between select-text ${log.is_valid ? '' : 'tampered'}" style="min-height:90px; height:90px; margin-bottom:18px" id="card-${log.id}">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center gap-2.5">
+                            <div class="w-7 h-7 rounded-lg bg-gray-800/80 flex items-center justify-center border border-[rgba(255,255,255,0.06)]">
+                                ${iconHtml}
+                            </div>
+                            <div>
+                                <h4 class="text-xs font-bold text-gray-200 tracking-wide">${log.action}</h4>
+                                <p class="text-[10px] text-gray-400">${log.timestamp} • por <strong class="text-gray-300">${log.username}</strong></p>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            ${roleBadge}
+                            ${statusBadge}
+                        </div>
+                    </div>
+                    <div class="flex items-center justify-between mt-2 pt-2 border-t border-[rgba(255,255,255,0.04)] text-[10px]">
+                        <span class="text-gray-400 truncate max-w-[280px]">${log.details}</span>
+                        <div class="flex items-center gap-2">
+                            ${hashPill}
+                            <button class="text-blue-400 hover:text-blue-300 font-bold flex items-center gap-0.5 transition-colors cursor-pointer" onclick="toggleCommitDetails(${log.id})">
+                                <span id="btn-text-${log.id}">Verificar</span> <i class="fa-solid fa-chevron-down text-[8px]" id="arrow-${log.id}"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Panel Expandible de Ecuación Criptográfica -->
+                <div class="details-pane bg-[rgba(4,6,13,0.6)] border-x border-b border-[rgba(255,255,255,0.06)] rounded-b-xl px-4 py-3 -mt-[18px] mb-4 text-[11px] text-gray-400 space-y-2.5" id="details-${log.id}">
+                    <div class="flex items-center justify-between border-b border-[rgba(255,255,255,0.04)] pb-1.5">
+                        <span class="font-bold text-[9px] text-gray-300 tracking-wider"><i class="fa-solid fa-calculator"></i> CADENA DE AUDITORÍA CRIPTOGRÁFICA</span>
+                        <span class="font-mono text-[9px] text-gray-400">Log ID #${log.id}</span>
+                    </div>
+                    
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <p class="text-gray-400 font-semibold mb-1">Ecuación de Eslabón:</p>
+                            <div class="p-2 bg-gray-900/90 rounded border border-gray-800 font-mono text-[10px] text-blue-400">
+                                H<sub>${log.id}</sub> = SHA256( Datos || H<sub>${log.id - 1}</sub> )
+                            </div>
+                        </div>
+                        <div>
+                            <p class="text-gray-400 font-semibold mb-1">Cálculo de Integridad:</p>
+                            <div class="p-2 rounded border font-mono text-[10px] ${log.is_valid ? 'bg-emerald-950/20 text-emerald-400 border-emerald-900/30' : 'bg-red-950/20 text-red-400 border-red-900/30'}">
+                                ${log.is_valid ? '✓ El hash coincide con la firma encadenada.' : '✗ DISCORDANCIA: Datos manipulados.'}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="space-y-1 font-mono text-[9px] pt-1.5 border-t border-[rgba(255,255,255,0.04)]">
+                        <div class="flex justify-between gap-4">
+                            <span class="flex-none">HASH PREVIO (H<sub>${log.id - 1}</sub>):</span>
+                            <span class="text-gray-300 break-all select-all text-right">${log.previous_hash}</span>
+                        </div>
+                        <div class="flex justify-between gap-4">
+                            <span class="flex-none">HASH REGISTRADO (H<sub>${log.id}</sub>):</span>
+                            <span class="${log.is_valid ? 'text-emerald-400' : 'text-red-400 font-bold'} break-all select-all text-right">${log.current_hash}</span>
+                        </div>
+                        <div class="flex justify-between gap-4 p-1 rounded ${log.is_valid ? 'bg-emerald-950/10' : 'bg-red-950/30 border border-red-900/40'}">
+                            <span class="flex-none">HASH CALCULADO ACTUALMENTE:</span>
+                            <span class="${log.is_valid ? 'text-emerald-400' : 'text-red-400 font-bold'} break-all select-all text-right">${log.calculated_hash || 'N/A'}</span>
+                        </div>
+                    </div>
+                </div>
+            `;
+            cardsContainer.appendChild(cardRow);
+            
+            // Hover bidireccional
+            const cardEl = cardRow.querySelector(`.commit-card`);
+            if (cardEl) {
+                cardEl.addEventListener("mouseenter", () => {
+                    const nodeCircle = document.getElementById(`node-c-${log.id}`);
+                    if (nodeCircle) {
+                        nodeCircle.setAttribute("r", "10");
+                        nodeCircle.setAttribute("stroke-width", "3");
+                        nodeCircle.setAttribute("stroke", "var(--text-main)");
+                    }
+                });
+                cardEl.addEventListener("mouseleave", () => {
+                    const nodeCircle = document.getElementById(`node-c-${log.id}`);
+                    if (nodeCircle) {
+                        nodeCircle.setAttribute("r", "7");
+                        nodeCircle.setAttribute("stroke-width", "2");
+                        nodeCircle.setAttribute("stroke", log.is_valid ? "#060913" : "var(--danger)");
+                    }
+                });
+            }
+        });
+        
+        // Dibujar el SVG alineado
+        updateGraphSVG(displayLogs);
+    }
+    
+    function updateGraphSVG(displayLogs) {
+        const container = document.getElementById("audit-graph-container");
+        const cardsContainer = document.getElementById("audit-cards-container");
+        const tooltip = document.getElementById("audit-tooltip");
+        if (!container || !cardsContainer || !tooltip || !displayLogs || displayLogs.length === 0) return;
+        
+        container.innerHTML = "";
+        
+        const N = displayLogs.length;
+        const paddingLeft = 30;
+        const laneWidth = 42;
+        const paddingBottom = 20;
+        
+        const width = 145;
+        // Altura exacta del scrollHeight para alinear los nodos a las tarjetas
+        const height = cardsContainer.scrollHeight;
+        
+        const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+        svg.setAttribute("width", "100%");
+        svg.setAttribute("height", height);
+        svg.setAttribute("viewBox", `0 0 ${width} ${height}`);
+        svg.style.overflow = "visible";
+        svg.style.position = "absolute";
+        svg.style.top = "0";
+        svg.style.left = "0";
+        
+        // 1. Dibujar líneas de carriles en el fondo
+        const lanes = [
+            { x: paddingLeft, name: "SIS", color: "var(--primary)" },
+            { x: paddingLeft + laneWidth, name: "ADM", color: "var(--success)" },
+            { x: paddingLeft + laneWidth * 2, name: "AUD", color: "#a855f7" }
+        ];
+        
+        lanes.forEach(lane => {
+            const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
+            line.setAttribute("x1", lane.x);
+            line.setAttribute("y1", 20);
+            line.setAttribute("x2", lane.x);
+            line.setAttribute("y2", height - paddingBottom);
+            line.setAttribute("stroke", "rgba(255, 255, 255, 0.05)");
+            line.setAttribute("stroke-width", "1.5");
+            line.setAttribute("stroke-dasharray", "4,4");
+            svg.appendChild(line);
+            
+            const text = document.createElementNS("http://www.w3.org/2000/svg", "text");
+            text.setAttribute("x", lane.x);
+            text.setAttribute("y", 15);
+            text.setAttribute("fill", "var(--text-muted)");
+            text.setAttribute("font-size", "8px");
+            text.setAttribute("font-weight", "bold");
+            text.setAttribute("text-anchor", "middle");
+            text.textContent = lane.name;
+            svg.appendChild(text);
+        });
+        
+        // 2. Calcular coordenadas dinámicamente
+        displayLogs.forEach(log => {
+            const cardEl = document.getElementById(`card-${log.id}`);
+            if (!cardEl) return;
+            
+            let laneIndex = 0;
+            if (log.username === "admin") laneIndex = 1;
+            else if (log.username === "auditor") laneIndex = 2;
+            
+            log.cx = paddingLeft + laneIndex * laneWidth;
+            log.cy = cardEl.offsetTop + cardEl.offsetHeight / 2;
+        });
+        
+        // 3. Dibujar curvas criptográficas Bézier
+        for (let i = 0; i < N - 1; i++) {
+            const curr = displayLogs[i];     // Bloque más nuevo (arriba)
+            const prev = displayLogs[i + 1]; // Bloque anterior (abajo)
+            
+            if (curr.cx === undefined || prev.cx === undefined) continue;
+            
+            const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+            
+            const x1 = curr.cx;
+            const y1 = curr.cy;
+            const x2 = prev.cx;
+            const y2 = prev.cy;
+            
+            const diffY = y2 - y1;
+            const cpY1 = y1 + diffY / 2;
+            const cpY2 = y2 - diffY / 2;
+            
+            const d = `M ${x1} ${y1} C ${x1} ${cpY1}, ${x2} ${cpY2}, ${x2} ${y2}`;
+            path.setAttribute("d", d);
+            path.setAttribute("fill", "none");
+            path.setAttribute("stroke-width", "2.5");
+            
+            if (curr.is_valid) {
+                path.setAttribute("stroke", "rgba(59, 130, 246, 0.25)");
+            } else {
+                path.setAttribute("stroke", "var(--danger)");
+                path.setAttribute("class", "link-failed");
+            }
+            svg.appendChild(path);
+        }
+        
+        // 4. Dibujar los círculos
+        displayLogs.forEach(log => {
+            if (log.cx === undefined) return;
+            
+            const g = document.createElementNS("http://www.w3.org/2000/svg", "g");
+            
+            if (!log.is_valid) {
+                const glow = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+                glow.setAttribute("cx", log.cx);
+                glow.setAttribute("cy", log.cy);
+                glow.setAttribute("r", "12");
+                glow.setAttribute("fill", "rgba(239, 68, 68, 0.25)");
+                glow.setAttribute("class", "node-failed");
+                g.appendChild(glow);
+            }
+            
+            const circle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+            circle.setAttribute("cx", log.cx);
+            circle.setAttribute("cy", log.cy);
+            circle.setAttribute("r", "7");
+            circle.setAttribute("id", `node-c-${log.id}`);
+            
+            let fillColor = "var(--primary)"; // Sistema
+            if (log.username === "admin") fillColor = "var(--success)";
+            else if (log.username === "auditor") fillColor = "#a855f7";
+            
+            circle.setAttribute("fill", fillColor);
+            circle.setAttribute("stroke", log.is_valid ? "#060913" : "var(--danger)");
+            circle.setAttribute("stroke-width", "2");
+            g.appendChild(circle);
+            
+            // Tooltip events
+            g.addEventListener("mouseenter", (e) => {
+                tooltip.style.opacity = "1";
+                tooltip.innerHTML = `
+                    <div class="flex items-center gap-1.5 mb-1.5 border-b border-[rgba(255,255,255,0.06)] pb-1">
+                        <span class="w-2 h-2 rounded-full" style="background-color:${fillColor}"></span>
+                        <h4 class="m-0 text-xs font-bold text-gray-200">[${log.action}]</h4>
+                    </div>
+                    <p><strong>Fecha:</strong> ${log.timestamp}</p>
+                    <p><strong>Usuario:</strong> ${log.username}</p>
+                    <p><strong>Estado:</strong> <span style="color:${log.is_valid ? 'var(--success)' : 'var(--danger)'}; font-weight:bold">${log.is_valid ? '✓ Íntegro' : '✗ ALTERADO'}</span></p>
+                    <p class="font-mono text-[9px] truncate"><strong>Curr:</strong> ${log.current_hash.substring(0, 16)}...</p>
+                `;
+                positionTooltip(e);
+                
+                // Resaltar tarjeta
+                const cardEl = document.getElementById(`card-${log.id}`);
+                if (cardEl) {
+                    cardEl.style.borderColor = "rgba(255, 255, 255, 0.4)";
+                    cardEl.style.background = "rgba(255, 255, 255, 0.05)";
+                }
+            });
+            
+            g.addEventListener("mousemove", (e) => {
+                positionTooltip(e);
+            });
+            
+            g.addEventListener("mouseleave", () => {
+                tooltip.style.opacity = "0";
+                
+                const cardEl = document.getElementById(`card-${log.id}`);
+                if (cardEl) {
+                    cardEl.style.borderColor = "";
+                    cardEl.style.background = "";
+                }
+            });
+            
+            svg.appendChild(g);
+        });
+        
+        container.appendChild(svg);
+        
+        function positionTooltip(e) {
+            const rect = container.getBoundingClientRect();
+            const x = e.clientX - rect.left + container.scrollLeft + 15;
+            const y = e.clientY - rect.top + container.scrollTop + 15;
+            tooltip.style.left = `${x}px`;
+            tooltip.style.top = `${y}px`;
+        }
     }
     
     // Verificación

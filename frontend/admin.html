@@ -6,6 +6,7 @@
     <title>SafeDrop Local - Control de Administración y Auditoría</title>
     <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body>
 
@@ -23,6 +24,7 @@
                         <li><a href="auditor.html" class="nav-link"><i class="fa-solid fa-unlock-keyhole"></i> Auditoría</a></li>
                         <li><a href="admin.html" class="nav-link active"><i class="fa-solid fa-gears"></i> Gestión</a></li>
                         <li><a href="docs.html" class="nav-link"><i class="fa-solid fa-file-invoice"></i> Informe Escrito</a></li>
+                        <li><a href="simulator.html" class="nav-link"><i class="fa-solid fa-circle-nodes"></i> ¿Cómo Funciona?</a></li>
                     </ul>
                     <div id="session-info"></div>
                 </nav>
@@ -145,9 +147,53 @@
                                 </button>
                             </div>
 
-                            <h3><i class="fa-solid fa-clock-rotate-left"></i> Historial de Actividad</h3>
-                            <div class="timeline" id="timeline">
-                                <!-- Línea de tiempo de logs cargada dinámicamente -->
+                            <div class="tab-container" style="display:flex; gap:0.5rem; margin-bottom:1rem; border-bottom:1px solid var(--border-color); padding-bottom:0.5rem">
+                                <button class="tab-btn active" id="tab-visual">
+                                    <i class="fa-solid fa-code-fork"></i> Bitácora Visual (Git-Style)
+                                </button>
+                                <button class="tab-btn" id="tab-text">
+                                    <i class="fa-solid fa-list-ul"></i> Detalle de Historial
+                                </button>
+                            </div>
+
+                            <!-- Filtros de Bitácora -->
+                            <div class="flex flex-wrap gap-2 mb-4 justify-between items-center text-xs">
+                                <span class="text-gray-400 font-semibold uppercase tracking-wider"><i class="fa-solid fa-filter"></i> Filtrar Bitácora:</span>
+                                <div class="flex gap-1.5" id="filter-btn-group">
+                                    <button class="px-2.5 py-1 rounded bg-blue-500/10 text-blue-400 border border-blue-500/20 font-medium filter-btn active" data-filter="all">Todos</button>
+                                    <button class="px-2.5 py-1 rounded bg-gray-800 text-gray-400 border border-transparent font-medium filter-btn" data-filter="system">Sistema</button>
+                                    <button class="px-2.5 py-1 rounded bg-gray-800 text-gray-400 border border-transparent font-medium filter-btn" data-filter="admin">Administrador</button>
+                                    <button class="px-2.5 py-1 rounded bg-gray-800 text-gray-400 border border-transparent font-medium filter-btn" data-filter="auditor">Auditor</button>
+                                    <button class="px-2.5 py-1 rounded bg-gray-800 text-red-400/80 border border-transparent font-medium filter-btn" data-filter="compromised">⚠️ Alertados</button>
+                                </div>
+                            </div>
+
+                            <!-- Contenedor del Grafo Criptográfico Visual -->
+                            <div id="panel-visual-graph" style="position:relative">
+                                <div class="flex" style="background:#060913; border-radius:12px; border:1px solid var(--border-color); overflow:hidden; height:500px">
+                                    <!-- Columna Grafo SVG (ancho fijo, barra lateral con scroll sincronizado oculto) -->
+                                    <div id="audit-graph-container" class="flex-none w-[145px] border-r border-[rgba(255,255,255,0.06)] overflow-y-hidden select-none" style="background:#04060d; position:relative">
+                                        <!-- SVG del Grafo cargado dinámicamente -->
+                                    </div>
+                                    
+                                    <!-- Columna Tarjetas de Commits (scrollable, derecha) -->
+                                    <div id="audit-cards-container" class="flex-grow overflow-y-auto p-4 space-y-3" style="scroll-behavior:smooth">
+                                        <!-- Tarjetas de commits cargadas dinámicamente -->
+                                    </div>
+                                </div>
+                                <div class="audit-tooltip" id="audit-tooltip"></div>
+                                <div style="display:flex; justify-content:space-around; font-size:0.75rem; color:var(--text-muted); margin-top:0.75rem; padding:0.4rem; background:rgba(255,255,255,0.02); border-radius:6px">
+                                    <span><i class="fa-solid fa-circle text-blue-500 mr-1"></i> Sistema / Anónimo</span>
+                                    <span><i class="fa-solid fa-circle text-emerald-500 mr-1"></i> Administración (admin)</span>
+                                    <span><i class="fa-solid fa-circle text-purple-500 mr-1"></i> Auditoría (auditor)</span>
+                                </div>
+                            </div>
+
+                            <!-- Contenedor del Timeline tradicional -->
+                            <div id="panel-text-timeline" style="display:none">
+                                <div class="timeline" id="timeline">
+                                    <!-- Línea de tiempo de logs cargada dinámicamente -->
+                                </div>
                             </div>
                         </div>
                     </div>

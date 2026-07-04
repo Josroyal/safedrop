@@ -85,7 +85,8 @@ header {
 }
 
 .nav-container {
-    max-width: 1200px;
+    max-width: 1600px;
+    width: 95%;
     margin: 0 auto;
     padding: 1.25rem 2rem;
     display: flex;
@@ -143,8 +144,8 @@ header {
 /* Contenido Principal */
 main.content-area {
     flex: 1;
-    max-width: 1200px;
-    width: 100%;
+    max-width: 1600px;
+    width: 95%;
     margin: 0 auto;
     padding: 2.5rem 2rem;
 }
@@ -619,6 +620,9 @@ textarea.form-control {
     position: relative;
     padding-left: 2rem;
     margin-top: 2rem;
+    max-height: 480px;
+    overflow-y: auto;
+    padding-right: 0.5rem;
 }
 
 .timeline::before {
@@ -815,3 +819,141 @@ footer {
     font-size: 0.85rem;
     margin-top: auto;
 }
+
+/* Tabs de Bitácora */
+.tab-btn {
+    border-bottom: 2px solid transparent !important;
+    border-radius: 0 !important;
+    color: var(--text-muted) !important;
+    font-size: 0.9rem;
+    padding: 0.5rem 1rem !important;
+    transition: var(--transition);
+}
+.tab-btn.active {
+    color: var(--primary) !important;
+    border-bottom-color: var(--primary) !important;
+    font-weight: 600;
+}
+
+/* Tooltip de Grafo de Auditoría */
+.audit-tooltip {
+    position: absolute;
+    z-index: 1000;
+    background: rgba(17, 24, 39, 0.95);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 0.75rem 1rem;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(8px);
+    pointer-events: none;
+    font-size: 0.8rem;
+    color: var(--text-main);
+    width: 280px;
+    opacity: 0;
+    transition: opacity 0.15s ease-in-out;
+}
+
+.audit-tooltip h4 {
+    margin-bottom: 0.25rem;
+    color: var(--primary);
+    font-size: 0.85rem;
+    border-bottom: 1px solid var(--border-color);
+    padding-bottom: 0.25rem;
+}
+
+.audit-tooltip p {
+    margin: 0.2rem 0;
+    color: var(--text-muted);
+}
+
+.audit-tooltip strong {
+    color: var(--text-main);
+}
+
+/* Animaciones del Grafo */
+@keyframes blink-red {
+    0% { filter: drop-shadow(0 0 2px var(--danger)); opacity: 1; }
+    50% { filter: drop-shadow(0 0 12px var(--danger)); opacity: 0.6; }
+    100% { filter: drop-shadow(0 0 2px var(--danger)); opacity: 1; }
+}
+
+.node-failed {
+    animation: blink-red 1.5s infinite alternate;
+}
+
+.link-failed {
+    stroke-dasharray: 4, 4;
+    animation: dash 1s linear infinite;
+}
+
+@keyframes dash {
+    to {
+        stroke-dashoffset: -20;
+    }
+}
+
+/* Tarjetas de Auditoría Avanzadas (Commit-style) */
+.commit-card {
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    background: rgba(17, 24, 39, 0.4);
+    border: 1px solid var(--border-color);
+}
+.commit-card:hover {
+    transform: translateX(4px);
+    background: rgba(17, 24, 39, 0.6);
+    border-color: rgba(255, 255, 255, 0.15);
+}
+.commit-card.tampered {
+    border-color: var(--danger) !important;
+    background: rgba(239, 68, 68, 0.04) !important;
+    box-shadow: 0 0 15px rgba(239, 68, 68, 0.15) !important;
+    animation: pulse-border-red 2s infinite alternate;
+}
+@keyframes pulse-border-red {
+    0% { border-color: rgba(239, 68, 68, 0.3); }
+    100% { border-color: rgba(239, 68, 68, 0.8); }
+}
+
+.details-pane {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.details-pane.open {
+    max-height: 500px;
+}
+
+/* Simulador Criptográfico */
+.section-tab {
+    transition: var(--transition);
+}
+.section-tab.active {
+    background-color: rgba(59, 130, 246, 0.15) !important;
+    border-color: rgba(59, 130, 246, 0.4) !important;
+    color: var(--primary) !important;
+}
+
+.background-grid {
+    background-image: 
+        radial-gradient(rgba(255, 255, 255, 0.04) 1px, transparent 1px),
+        radial-gradient(rgba(255, 255, 255, 0.02) 1px, transparent 1px);
+    background-size: 16px 16px;
+    background-position: 0 0, 8px 8px;
+}
+
+.glow-bar {
+    box-shadow: 0 0 12px rgba(16, 185, 129, 0.5);
+}
+.glow-bar-failed {
+    box-shadow: 0 0 12px rgba(239, 68, 68, 0.5);
+}
+
+.block-node {
+    transition: all 0.3s ease;
+}
+.block-node.tampered {
+    border-color: var(--danger) !important;
+    box-shadow: 0 0 15px rgba(239, 68, 68, 0.2) !important;
+}
+
+
