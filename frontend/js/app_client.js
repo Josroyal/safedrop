@@ -534,6 +534,20 @@ function initAuditorDashboard() {
                             <i class="fa-solid fa-download"></i> Descargar Evidencia
                         </a>
                     `;
+                    
+                    const downloadBtn = infoRow.querySelector('a');
+                    if (downloadBtn) {
+                        downloadBtn.addEventListener('click', async () => {
+                            try {
+                                await fetch(`${API_BASE}/api/audit/log-download`, {
+                                    method: "POST",
+                                    headers: { "Content-Type": "application/json", ...getAuthHeaders() },
+                                    body: JSON.stringify({ filename: att.filename })
+                                });
+                            } catch (e) { console.error(e); }
+                        });
+                    }
+                    
                     fileContainer.appendChild(infoRow);
                     
                     // Si es una imagen, mostrar la vista previa (visualización)
@@ -544,7 +558,15 @@ function initAuditorDashboard() {
                             <img src="${fileUrl}" alt="${att.filename}" style="max-width: 100%; max-height: 380px; width: auto; height: auto; object-fit: contain; border-radius: 4px; box-shadow: 0 4px 12px rgba(0,0,0,0.5); display: inline-block; vertical-align: middle;" />
                         `;
                         fileContainer.appendChild(imgPreview);
+                    } else if (att.mime_type === "application/pdf") {
+                        const pdfPreview = document.createElement("div");
+                        pdfPreview.style.cssText = "margin-top: 0.25rem; border-radius: 6px; overflow: hidden; border: 1px solid rgba(255, 255, 255, 0.05); width: 100%; height: 600px; background: #0b0f19; padding: 0.5rem;";
+                        pdfPreview.innerHTML = `
+                            <iframe src="${fileUrl}" width="100%" height="100%" style="border: none; border-radius: 4px; box-shadow: 0 4px 12px rgba(0,0,0,0.5);"></iframe>
+                        `;
+                        fileContainer.appendChild(pdfPreview);
                     }
+
                     
                     decryptedFilesEl.appendChild(fileContainer);
                 }
@@ -835,6 +857,8 @@ function initAdminDashboard() {
             filteredLogs = globalAuditLogs.filter(log => log.username === "admin");
         } else if (activeFilter === "auditor") {
             filteredLogs = globalAuditLogs.filter(log => log.username === "auditor");
+        } else if (activeFilter === "download") {
+            filteredLogs = globalAuditLogs.filter(log => log.action === "EVIDENCE_DOWNLOADED");
         } else if (activeFilter === "compromised") {
             filteredLogs = globalAuditLogs.filter(log => !log.is_valid);
         }
@@ -866,6 +890,8 @@ function initAdminDashboard() {
                 iconHtml = '<i class="fa-solid fa-database text-amber-400"></i>';
             } else if (log.action.includes("DATABASE_RESTORE")) {
                 iconHtml = '<i class="fa-solid fa-rotate-left text-orange-400"></i>';
+            } else if (log.action === "EVIDENCE_DOWNLOADED") {
+                iconHtml = '<i class="fa-solid fa-file-arrow-down text-amber-500"></i>';
             } else if (log.action.includes("TAMPER")) {
                 iconHtml = '<i class="fa-solid fa-triangle-exclamation text-red-500"></i>';
             }
@@ -884,9 +910,10 @@ function initAdminDashboard() {
                 : '<span class="text-[10px] text-red-400 font-bold flex items-center gap-1 animate-pulse"><i class="fa-solid fa-triangle-exclamation"></i> ALTERADO</span>';
                 
             const hashPill = `<span class="font-mono text-[9px] text-gray-400 bg-gray-900 border border-gray-800 rounded px-1.5 py-0.5 select-all">sha256:${log.current_hash.substring(0, 8)}...</span>`;
+            const amberAura = log.action === 'EVIDENCE_DOWNLOADED' ? 'border border-amber-500/50 shadow-[0_0_15px_rgba(245,158,11,0.25)] bg-amber-950/20' : '';
             
             cardRow.innerHTML = `
-                <div class="commit-card rounded-xl p-4 flex flex-col justify-between select-text ${log.is_valid ? '' : 'tampered'}" style="min-height:90px; height:90px; margin-bottom:18px" id="card-${log.id}">
+                <div class="commit-card rounded-xl p-4 flex flex-col justify-between select-text ${log.is_valid ? '' : 'tampered'} ${amberAura}" style="min-height:90px; height:90px; margin-bottom:18px" id="card-${log.id}">
                     <div class="flex items-center justify-between">
                         <div class="flex items-center gap-2.5">
                             <div class="w-7 h-7 rounded-lg bg-gray-800/80 flex items-center justify-center border border-[rgba(255,255,255,0.06)]">

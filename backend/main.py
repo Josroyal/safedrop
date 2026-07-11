@@ -55,7 +55,11 @@ class ReportSubmit(BaseModel):
 class UserCreate(BaseModel):
     username: str
     password: str
-    role: str  # "admin" o "auditor"
+    role: str
+
+class LogDownloadRequest(BaseModel):
+    filename: str
+  # "admin" o "auditor"
 
 class UserResponse(BaseModel):
     id: int
@@ -249,6 +253,25 @@ def get_report_detail(
         "encrypted_aes_key": report.encrypted_aes_key,
         "attachments": attachments_list
     }
+
+@app.post("/api/audit/log-download")
+def log_evidence_download(
+    req: LogDownloadRequest,
+    current_user: User = Depends(RoleChecker(["auditor", "admin"])),
+    db: Session = Depends(get_db)
+):
+    """
+    Registra en la bitácora cuando un usuario descarga una evidencia.
+    """
+    add_audit_log(
+        db,
+        action="EVIDENCE_DOWNLOADED",
+        user_id=current_user.id,
+        username=current_user.username,
+        details=f"El usuario '{current_user.username}' ha descargado el archivo de evidencia: {req.filename}"
+    )
+    return {"status": "ok"}
+
 
 @app.get("/api/audit/logs")
 def get_audit_logs(
