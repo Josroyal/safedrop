@@ -1,0 +1,1294 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SafeDrop Local — La Historia Interactiva</title>
+<link rel="stylesheet" href="css/style.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+<style>
+/* ===== Fallback tokens (funciona incluso sin style.css) ===== */
+:root{
+  --bg-main:#0b0f19; --bg-card:rgba(17,24,39,.85); --bg-input:#1f2937;
+  --border-color:rgba(255,255,255,.08);
+  --primary:#3b82f6; --success:#10b981; --warning:#f59e0b; --danger:#ef4444;
+  --text-main:#f3f4f6; --text-muted:#9ca3af; --text-dark:#4b5563;
+  --font-sans:'Outfit',system-ui,sans-serif; --font-mono:'JetBrains Mono',ui-monospace,monospace;
+  /* Acentos por capítulo */
+  --ch1:#3b82f6; --ch2:#94a3b8; --ch3:#a78bfa; --ch4:#10b981; --ch5:#ef4444;
+  --accent:var(--ch1);
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;background:var(--bg-main);color:var(--text-main);font-family:var(--font-sans);overflow:hidden}
+
+/* ===== Layout maestro ===== */
+#journey-app{position:fixed;inset:0;display:flex;flex-direction:column}
+#j-topbar{flex:none;height:58px;display:flex;align-items:center;gap:1rem;padding:0 1.2rem;
+  background:rgba(11,15,25,.85);backdrop-filter:blur(12px);border-bottom:1px solid var(--border-color);z-index:60}
+#j-topbar .logo{display:flex;align-items:center;gap:.55rem;font-weight:800;font-size:1.05rem;color:var(--text-main);text-decoration:none}
+#j-topbar .logo i{color:var(--primary)}
+#j-topbar .logo span b{background:linear-gradient(90deg,#3b82f6,#10b981);-webkit-background-clip:text;background-clip:text;color:transparent}
+#j-nav{display:flex;gap:1.1rem;margin-left:auto;font-size:.85rem}
+#j-nav a{color:var(--text-muted);text-decoration:none;transition:color .2s}
+#j-nav a:hover{color:var(--text-main)}
+#j-nav a.active{color:var(--accent);font-weight:600}
+#j-badge{font-size:.72rem;font-family:var(--font-mono);padding:.28rem .6rem;border-radius:99px;border:1px solid var(--border-color);color:var(--text-muted);white-space:nowrap}
+#j-badge.online{border-color:rgba(16,185,129,.4);color:var(--success)}
+
+#j-main{flex:1;display:flex;min-height:0;position:relative}
+#j-stage-wrap{flex:1;position:relative;min-width:0;background:
+  radial-gradient(60vw 60vw at 8% 0%,rgba(59,130,246,.08),transparent 70%),
+  radial-gradient(50vw 50vw at 95% 100%,rgba(16,185,129,.05),transparent 70%)}
+#j-stage{position:absolute;inset:0;width:100%;height:100%;display:block}
+
+/* Breadcrumb de zoom */
+#j-crumb{position:absolute;top:14px;left:16px;z-index:40;display:flex;gap:.4rem;align-items:center;
+  font-size:.8rem;font-family:var(--font-mono);color:var(--text-muted);flex-wrap:wrap;max-width:60%}
+#j-crumb button{background:rgba(17,24,39,.8);border:1px solid var(--border-color);color:var(--text-muted);
+  border-radius:8px;padding:.3rem .65rem;cursor:pointer;font:inherit;transition:.2s}
+#j-crumb button:hover{color:var(--text-main);border-color:var(--accent)}
+#j-crumb button.here{color:var(--accent);border-color:var(--accent);pointer-events:none}
+#j-crumb .sep{opacity:.5}
+
+/* Etiqueta de capítulo */
+#j-chapterchip{position:absolute;top:14px;right:16px;z-index:40;font-size:.78rem;font-weight:700;letter-spacing:.06em;
+  text-transform:uppercase;color:var(--accent);background:rgba(17,24,39,.8);border:1px solid var(--accent);
+  border-radius:99px;padding:.35rem .9rem;transition:color .5s,border-color .5s}
+
+/* ===== Panel del narrador ===== */
+#j-narrator{flex:none;width:390px;border-left:1px solid var(--border-color);background:rgba(13,18,30,.92);
+  backdrop-filter:blur(10px);display:flex;flex-direction:column;z-index:45}
+#j-narr-head{padding:1.1rem 1.4rem .6rem;border-bottom:1px solid var(--border-color)}
+#j-narr-kicker{font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;color:var(--accent);font-weight:700;transition:color .5s}
+#j-narr-title{font-size:1.35rem;font-weight:800;line-height:1.25;margin:.25rem 0 .4rem}
+#j-narr-body{padding:1.1rem 1.4rem;overflow-y:auto;flex:1;font-size:1.02rem;line-height:1.65;color:#d7dbe3}
+#j-narr-body b{color:var(--text-main)}
+#j-narr-body .term{color:var(--accent);border-bottom:1px dashed var(--accent);cursor:help;font-weight:600}
+#j-narr-body .beatnote{display:block;margin-top:1rem;padding:.7rem .9rem;border-left:3px solid var(--accent);
+  background:rgba(255,255,255,.03);border-radius:0 10px 10px 0;font-size:.9rem;color:var(--text-muted)}
+#j-narr-action{padding: .9rem 1.4rem;border-top:1px solid var(--border-color)}
+#j-narr-action .cta{width:100%;padding:.8rem 1rem;border-radius:12px;border:1px solid var(--accent);
+  background:color-mix(in srgb,var(--accent) 14%,transparent);color:var(--text-main);font:inherit;font-weight:700;
+  cursor:pointer;display:flex;align-items:center;justify-content:center;gap:.6rem;transition:.2s}
+#j-narr-action .cta:hover{background:color-mix(in srgb,var(--accent) 26%,transparent)}
+#j-narr-action .cta[disabled]{opacity:.4;cursor:not-allowed}
+
+/* Entrada del mensaje (cap.1) */
+.j-input-msg{width:100%;min-height:84px;resize:vertical;background:var(--bg-input);color:var(--text-main);
+  border:1px solid var(--border-color);border-radius:10px;padding:.7rem .8rem;font:inherit;font-size:.95rem;margin-top:.6rem}
+.j-input-msg:focus{outline:none;border-color:var(--accent)}
+
+/* ===== Barra de reproducción ===== */
+#j-playbar{flex:none;height:74px;border-top:1px solid var(--border-color);background:rgba(11,15,25,.92);
+  backdrop-filter:blur(12px);display:flex;align-items:center;gap:1rem;padding:0 1.2rem;z-index:60}
+.j-btn{width:40px;height:40px;border-radius:50%;border:1px solid var(--border-color);background:rgba(31,41,55,.6);
+  color:var(--text-main);cursor:pointer;font-size:.95rem;display:flex;align-items:center;justify-content:center;transition:.2s;flex:none}
+.j-btn:hover{border-color:var(--accent);color:var(--accent)}
+.j-btn.primary{background:var(--accent);border-color:var(--accent);color:#fff;width:48px;height:48px;font-size:1.1rem}
+.j-btn.primary:hover{filter:brightness(1.15);color:#fff}
+#j-speed{background:rgba(31,41,55,.6);border:1px solid var(--border-color);color:var(--text-muted);border-radius:8px;
+  font:inherit;font-size:.8rem;padding:.35rem .5rem;cursor:pointer}
+#j-timeline{flex:1;display:flex;gap:6px;height:38px;align-items:stretch;min-width:0}
+.j-seg{flex:1;display:flex;flex-direction:column;gap:5px;min-width:0;cursor:pointer}
+.j-seg-label{font-size:.68rem;letter-spacing:.05em;color:var(--text-dark);white-space:nowrap;overflow:hidden;
+  text-overflow:ellipsis;text-transform:uppercase;font-weight:700;transition:color .3s}
+.j-seg.active .j-seg-label{color:var(--seg-color)}
+.j-seg-track{flex:1;display:flex;gap:3px}
+.j-tick{flex:1;border-radius:4px;background:rgba(255,255,255,.07);position:relative;transition:background .3s;min-width:4px}
+.j-tick.done{background:color-mix(in srgb,var(--seg-color) 55%,transparent)}
+.j-tick.now{background:var(--seg-color);box-shadow:0 0 10px var(--seg-color)}
+.j-tick:hover::after{content:attr(data-tip);position:absolute;bottom:calc(100% + 8px);left:50%;transform:translateX(-50%);
+  background:#111827;border:1px solid var(--border-color);color:var(--text-main);font-size:.72rem;padding:.35rem .6rem;
+  border-radius:8px;white-space:nowrap;z-index:99;pointer-events:none}
+
+/* ===== Minimapa ===== */
+#j-minimap{position:absolute;bottom:14px;right:16px;width:196px;height:112px;z-index:40;border:1px solid var(--border-color);
+  border-radius:12px;background:rgba(11,15,25,.85);backdrop-filter:blur(8px);overflow:hidden;cursor:pointer;transition:border-color .3s}
+#j-minimap:hover{border-color:var(--accent)}
+#j-minimap svg{width:100%;height:100%;display:block}
+#j-mini-cam{fill:none;stroke:var(--accent);stroke-width:26;opacity:.9;transition:stroke .4s}
+#j-minimap .hint{position:absolute;bottom:4px;left:0;right:0;text-align:center;font-size:.62rem;color:var(--text-dark);font-family:var(--font-mono)}
+
+/* ===== Lente de detalle (Nivel 2 en HTML legible) ===== */
+#j-lens{position:absolute;inset:0;z-index:35;display:none;align-items:center;justify-content:center;padding:70px 40px 30px;pointer-events:none}
+#j-lens.on{display:flex}
+#j-lens .lens-card{pointer-events:auto;max-width:760px;width:100%;max-height:100%;overflow-y:auto;
+  background:rgba(13,18,30,.94);border:1px solid color-mix(in srgb,var(--accent) 45%,transparent);
+  border-radius:18px;padding:1.4rem 1.6rem;box-shadow:0 24px 80px rgba(0,0,0,.55), 0 0 40px color-mix(in srgb,var(--accent) 12%,transparent)}
+.lens-title{font-size:1.05rem;font-weight:800;display:flex;align-items:center;gap:.6rem;margin:0 0 1rem;color:var(--text-main)}
+.lens-title i{color:var(--accent)}
+.hexrow{display:flex;gap:.8rem;align-items:baseline;font-family:var(--font-mono);font-size:.86rem;padding:.5rem .2rem;
+  border-bottom:1px dashed rgba(255,255,255,.07)}
+.hexrow .k{color:var(--text-muted);min-width:190px;flex:none;font-size:.78rem}
+.hexrow .v{color:var(--text-main);word-break:break-all;cursor:pointer}
+.hexrow .v.trunc{color:var(--accent)}
+.hexrow .v.trunc:hover{text-decoration:underline}
+.lens-note{margin-top:1rem;font-size:.88rem;color:var(--text-muted);line-height:1.55}
+.lens-actions{margin-top:1.1rem;display:flex;gap:.7rem;flex-wrap:wrap}
+.lens-btn{padding:.6rem 1rem;border-radius:10px;border:1px solid var(--accent);background:transparent;color:var(--accent);
+  font:inherit;font-weight:600;font-size:.88rem;cursor:pointer;transition:.2s}
+.lens-btn:hover{background:color-mix(in srgb,var(--accent) 15%,transparent)}
+.lens-btn.solid{background:var(--accent);color:#fff}
+.lens-err{margin-top:.8rem;font-family:var(--font-mono);font-size:.82rem;color:var(--danger);
+  background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.3);border-radius:10px;padding:.7rem .9rem;display:none;white-space:pre-wrap}
+
+/* Animación XOR / Matrix */
+.gcm-line{display:flex;flex-wrap:wrap;gap:4px;font-family:var(--font-mono);font-size:1.05rem;margin:.4rem 0 1rem}
+.gcm-ch{width:26px;height:34px;display:flex;align-items:center;justify-content:center;border-radius:6px;
+  background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);transition:.25s;perspective:200px}
+.gcm-ch.flip{background:rgba(59,130,246,.15);border-color:var(--accent);color:var(--accent);transform:rotateX(360deg)}
+.gcm-math{font-family:var(--font-mono);font-size:.92rem;background:rgba(255,255,255,.04);border:1px solid var(--border-color);
+  border-radius:10px;padding:.8rem 1rem;line-height:1.9}
+.gcm-math .hl{color:var(--accent);font-weight:700}
+.gcm-math .ok{color:var(--success);font-weight:700}
+
+/* Shares (cap 3/4) */
+.share-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:.9rem;margin:.6rem 0 1rem}
+.share-card{border:1px solid rgba(167,139,250,.35);background:rgba(167,139,250,.06);border-radius:14px;padding:.9rem;
+  text-align:center;cursor:pointer;transition:.25s;position:relative}
+.share-card i{font-size:1.5rem;color:#a78bfa;display:block;margin-bottom:.4rem}
+.share-card .sid{font-weight:800;font-size:.95rem}
+.share-card .shex{font-family:var(--font-mono);font-size:.68rem;color:var(--text-muted);word-break:break-all;margin-top:.35rem;max-height:44px;overflow:hidden}
+.share-card.loaded{border-color:var(--success);background:rgba(16,185,129,.1)}
+.share-card.loaded::after{content:'✓ cargado en RAM';position:absolute;top:.4rem;right:.6rem;font-size:.62rem;color:var(--success);font-family:var(--font-mono)}
+.share-card.disabled{opacity:.35;pointer-events:none}
+
+/* Gráfica Lagrange */
+#lagrange-svg{width:100%;height:300px;background:rgba(255,255,255,.02);border:1px solid var(--border-color);border-radius:12px}
+.lg-toggles{display:flex;gap:.6rem;margin:.7rem 0}
+.lg-tg{flex:1;padding:.5rem;border-radius:10px;border:1px solid rgba(167,139,250,.35);background:transparent;color:var(--text-muted);
+  font:inherit;font-size:.82rem;font-weight:700;cursor:pointer;transition:.2s}
+.lg-tg.on{background:rgba(167,139,250,.18);color:#c4b5fd;border-color:#a78bfa}
+.lg-verdict{font-size:.9rem;font-weight:700;text-align:center;padding:.55rem;border-radius:10px;margin-top:.2rem}
+.lg-verdict.no{background:rgba(239,68,68,.09);color:#fca5a5}
+.lg-verdict.yes{background:rgba(16,185,129,.1);color:#6ee7b7}
+
+/* Bitácora / logs (cap 2 y 5) */
+.log-list{display:flex;flex-direction:column;gap:.45rem;margin:.5rem 0 1rem;max-height:280px;overflow-y:auto}
+.log-item{display:flex;gap:.8rem;align-items:center;border:1px solid var(--border-color);border-radius:10px;
+  padding:.55rem .8rem;font-size:.82rem;cursor:pointer;transition:.2s;background:rgba(255,255,255,.02)}
+.log-item:hover{border-color:var(--accent)}
+.log-item .lid{font-family:var(--font-mono);color:var(--text-dark);flex:none}
+.log-item .lact{font-weight:700;flex:none;min-width:150px}
+.log-item .ldet{color:var(--text-muted);flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.log-item .lhash{font-family:var(--font-mono);font-size:.68rem;color:var(--text-dark);flex:none}
+.log-item.sel{border-color:var(--danger);background:rgba(239,68,68,.07)}
+.log-item.corrupt{border-color:var(--danger);background:rgba(239,68,68,.12);animation:pulse-red 1.2s infinite}
+.log-item.okv{border-color:rgba(16,185,129,.5)}
+.log-item.tainted{border-color:rgba(245,158,11,.4);background:rgba(245,158,11,.05)}
+@keyframes pulse-red{0%,100%{box-shadow:0 0 0 rgba(239,68,68,.0)}50%{box-shadow:0 0 18px rgba(239,68,68,.45)}}
+.hash-cmp{display:grid;grid-template-columns:1fr 1fr;gap:.9rem;margin-top:.6rem}
+.hash-cmp .col{background:rgba(255,255,255,.03);border:1px solid var(--border-color);border-radius:12px;padding:.8rem}
+.hash-cmp h5{margin:0 0 .5rem;font-size:.75rem;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted)}
+.hash-chars{font-family:var(--font-mono);font-size:.8rem;word-break:break-all;line-height:1.7}
+.hash-chars span.bad{color:var(--danger);background:rgba(239,68,68,.15);border-radius:3px}
+.hash-chars span.good{color:var(--success)}
+
+/* Panel Modo Ingeniero */
+#j-eng{position:absolute;left:16px;bottom:14px;z-index:40;width:420px;max-height:44%;display:none;flex-direction:column;
+  background:rgba(9,12,20,.94);border:1px solid rgba(59,130,246,.3);border-radius:14px;overflow:hidden}
+#j-eng.on{display:flex}
+#j-eng header{padding:.55rem .9rem;font-size:.75rem;font-family:var(--font-mono);color:var(--primary);
+  border-bottom:1px solid var(--border-color);display:flex;justify-content:space-between;background:transparent}
+#j-eng pre{margin:0;padding: .8rem .95rem;overflow:auto;font-family:var(--font-mono);font-size:.74rem;line-height:1.6;color:#c9d4e5}
+#j-eng pre .cm{color:#64748b}#j-eng pre .st{color:#86efac}#j-eng pre .kw{color:#93c5fd}
+#j-engtoggle{position:absolute;left:16px;bottom:14px;z-index:39}
+.pill-toggle{background:rgba(17,24,39,.85);border:1px solid var(--border-color);color:var(--text-muted);border-radius:99px;
+  padding:.45rem .95rem;font:inherit;font-size:.78rem;cursor:pointer;transition:.2s;display:flex;align-items:center;gap:.5rem}
+.pill-toggle:hover{color:var(--text-main);border-color:var(--primary)}
+.pill-toggle.on{color:var(--primary);border-color:var(--primary)}
+
+/* Glosario popover */
+#j-gloss{position:absolute;z-index:80;max-width:320px;background:#0f1524;border:1px solid var(--accent);border-radius:12px;
+  padding: .9rem 1rem;font-size:.85rem;line-height:1.55;color:#d7dbe3;display:none;box-shadow:0 18px 50px rgba(0,0,0,.5)}
+#j-gloss h6{margin:0 0 .3rem;color:var(--accent);font-size:.8rem;letter-spacing:.05em;text-transform:uppercase}
+
+/* SVG mundo: estilos */
+#j-stage text{font-family:var(--font-sans)}
+.w-label{fill:#9ca3af;font-size:15px;font-weight:700;letter-spacing:.08em;text-transform:uppercase}
+.w-sub{fill:#4b5563;font-size:11px;font-weight:500}
+.mono{font-family:var(--font-mono)}
+.hidden-el{opacity:0}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+@media (max-width:1100px){#j-narrator{width:320px}#j-eng{display:none!important}}
+@media (max-width:860px){
+  #j-main{flex-direction:column}
+  #j-narrator{width:100%;height:38%;border-left:none;border-top:1px solid var(--border-color)}
+  #j-minimap,#j-engtoggle{display:none}
+  #j-nav{display:none}
+}
+</style>
+</head>
+<body>
+<div id="journey-app">
+  <div id="j-topbar">
+    <a class="logo" href="index.html"><i class="fa-solid fa-shield-halved"></i><span>SafeDrop <b>Local</b></span></a>
+    <span id="j-badge"><i class="fa-solid fa-circle" style="font-size:.5rem"></i> Modo demo autónomo</span>
+    <nav id="j-nav">
+      <a href="index.html"><i class="fa-solid fa-paper-plane"></i> Enviar Reporte</a>
+      <a href="auditor.html"><i class="fa-solid fa-unlock-keyhole"></i> Auditoría</a>
+      <a href="admin.html"><i class="fa-solid fa-gears"></i> Gestión</a>
+      <a href="docs.html"><i class="fa-solid fa-file-invoice"></i> Informe</a>
+      <a href="journey.html" class="active"><i class="fa-solid fa-clapperboard"></i> La Historia</a>
+    </nav>
+  </div>
+
+  <div id="j-main">
+    <div id="j-stage-wrap">
+      <svg id="j-stage" viewBox="0 0 1600 900" preserveAspectRatio="xMidYMid meet" aria-label="Mapa del sistema SafeDrop"></svg>
+      <div id="j-crumb"></div>
+      <div id="j-chapterchip">Prólogo</div>
+      <div id="j-lens"><div class="lens-card" id="j-lens-card"></div></div>
+      <div id="j-minimap" title="Clic: vista completa">
+        <svg viewBox="0 0 1600 900" preserveAspectRatio="xMidYMid meet"><use href="#world-root"></use><rect id="j-mini-cam" x="0" y="0" width="1600" height="900" rx="40"/></svg>
+        <div class="hint">MINIMAPA</div>
+      </div>
+      <button id="j-engtoggle" class="pill-toggle"><i class="fa-solid fa-code"></i> Modo Ingeniero</button>
+      <div id="j-eng"><header><span id="j-eng-file">—</span><span>datos reales</span></header><pre id="j-eng-body"></pre></div>
+      <div id="j-gloss"></div>
+    </div>
+
+    <aside id="j-narrator">
+      <div id="j-narr-head">
+        <div id="j-narr-kicker">Prólogo</div>
+        <div id="j-narr-title">—</div>
+      </div>
+      <div id="j-narr-body"></div>
+      <div id="j-narr-action"><button class="cta" id="j-cta"><span>Comenzar la historia</span><i class="fa-solid fa-arrow-right"></i></button></div>
+    </aside>
+  </div>
+
+  <div id="j-playbar">
+    <button class="j-btn" id="j-prev" title="Anterior (←)"><i class="fa-solid fa-backward-step"></i></button>
+    <button class="j-btn primary" id="j-play" title="Reproducir (espacio)"><i class="fa-solid fa-play"></i></button>
+    <button class="j-btn" id="j-next" title="Siguiente (→)"><i class="fa-solid fa-forward-step"></i></button>
+    <div id="j-timeline"></div>
+    <select id="j-speed" title="Velocidad"><option value="0.5">0.5×</option><option value="1" selected>1×</option><option value="2">2×</option></select>
+    <button class="j-btn" id="j-restart" title="Reiniciar historia"><i class="fa-solid fa-rotate-left"></i></button>
+  </div>
+</div>
+<script>
+/* ============================================================
+   SafeDrop — La Historia Interactiva
+   Motor de cámara + narrativa por beats + criptografía real
+   ============================================================ */
+"use strict";
+const REDUCED = matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+/* ---------- 1. EL MUNDO (SVG maestro, un solo espacio) ---------- */
+const WORLD = `
+<defs>
+  <linearGradient id="g-screen" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0" stop-color="#131c30"/><stop offset="1" stop-color="#0d1322"/>
+  </linearGradient>
+  <linearGradient id="g-gold" x1="0" y1="0" x2="1" y2="1">
+    <stop offset="0" stop-color="#fde68a"/><stop offset="1" stop-color="#f59e0b"/>
+  </linearGradient>
+  <linearGradient id="g-tls" x1="0" y1="0" x2="1" y2="0">
+    <stop offset="0" stop-color="rgba(59,130,246,.35)"/><stop offset="1" stop-color="rgba(16,185,129,.35)"/>
+  </linearGradient>
+  <filter id="f-glow" x="-60%" y="-60%" width="220%" height="220%">
+    <feGaussianBlur stdDeviation="6" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+  </filter>
+  <filter id="f-noise"><feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="2" result="n"/>
+    <feColorMatrix in="n" type="matrix" values="0 0 0 0 .3  0 0 0 0 .5  0 0 0 0 .9  0 0 0 .35 0"/>
+    <feComposite operator="in" in2="SourceGraphic"/></filter>
+  <symbol id="sym-key" viewBox="0 0 48 24">
+    <circle cx="10" cy="12" r="8" fill="none" stroke="currentColor" stroke-width="3.4"/>
+    <path d="M18 12 H44 M34 12 v7 M40 12 v5" stroke="currentColor" stroke-width="3.4" fill="none" stroke-linecap="round"/>
+  </symbol>
+  <symbol id="sym-usb" viewBox="0 0 40 80">
+    <rect x="6" y="22" width="28" height="52" rx="6" fill="#1f2937" stroke="currentColor" stroke-width="3.4"/>
+    <rect x="13" y="4" width="14" height="18" fill="#64748b" stroke="currentColor" stroke-width="3.4"/>
+    <rect x="17" y="8" width="3" height="4" fill="#0f172a"/>
+    <rect x="22" y="8" width="3" height="4" fill="#0f172a"/>
+    <circle cx="20" cy="46" r="4.5" fill="none" stroke="#ef4444" stroke-width="2"/>
+    <path d="M20 50.5 v14 M17 58 h6 M17 62 h6" stroke="#ef4444" stroke-width="2" stroke-linecap="round"/>
+  </symbol>
+  <symbol id="sym-safe" viewBox="0 0 40 40">
+    <rect x="3" y="3" width="34" height="34" rx="6" fill="#1f2937" stroke="currentColor" stroke-width="3.4"/>
+    <circle cx="20" cy="20" r="8" fill="none" stroke="currentColor" stroke-width="3.4"/>
+    <line x1="20" y1="12" x2="20" y2="28" stroke="currentColor" stroke-width="3.4"/>
+    <line x1="12" y1="20" x2="28" y2="20" stroke="currentColor" stroke-width="3.4"/>
+  </symbol>
+  <symbol id="sym-keycard" viewBox="0 0 40 40">
+    <rect x="3" y="8" width="34" height="24" rx="4" fill="#1f2937" stroke="currentColor" stroke-width="3.4"/>
+    <rect x="7" y="13" width="10" height="14" fill="currentColor"/>
+    <line x1="21" y1="14" x2="31" y2="14" stroke="currentColor" stroke-width="2"/>
+    <line x1="21" y1="20" x2="31" y2="20" stroke="currentColor" stroke-width="2"/>
+    <line x1="21" y1="26" x2="27" y2="26" stroke="currentColor" stroke-width="2"/>
+  </symbol>
+  <symbol id="sym-brick" viewBox="0 0 90 60">
+    <rect x="2" y="2" width="86" height="56" rx="8" fill="#0a0e18" stroke="#334155" stroke-width="2"/>
+    <rect x="2" y="2" width="86" height="56" rx="8" filter="url(#f-noise)"/>
+    <text x="45" y="36" text-anchor="middle" font-family="JetBrains Mono,monospace" font-size="12" fill="#475569">0x??</text>
+  </symbol>
+</defs>
+
+<g id="world-root">
+  <!-- fondo cuadriculado sutil -->
+  <g opacity=".35">
+    ${Array.from({length:17},(_,i)=>`<line x1="${i*100}" y1="0" x2="${i*100}" y2="900" stroke="rgba(255,255,255,.025)"/>`).join("")}
+    ${Array.from({length:10},(_,i)=>`<line x1="0" y1="${i*100}" x2="1600" y2="${i*100}" stroke="rgba(255,255,255,.025)"/>`).join("")}
+  </g>
+
+  <!-- ================= INFORMANTE (izquierda) ================= -->
+  <g id="w-informante">
+    <text class="w-label" x="245" y="268" text-anchor="middle">Informante</text>
+    <text class="w-sub" x="245" y="286" text-anchor="middle">Navegador — origen de la confianza</text>
+    <!-- laptop -->
+    <g id="w-inf-laptop">
+      <rect x="95" y="300" width="300" height="200" rx="14" fill="url(#g-screen)" stroke="#2b3a55" stroke-width="2.5"/>
+      <rect x="95" y="300" width="300" height="26" rx="14" fill="#182238"/>
+      <circle cx="112" cy="313" r="4" fill="#ef4444"/><circle cx="126" cy="313" r="4" fill="#f59e0b"/><circle cx="140" cy="313" r="4" fill="#10b981"/>
+      <rect x="160" y="306" width="200" height="14" rx="7" fill="#0b1020" stroke="#26334d"/>
+      <text x="176" y="317" font-size="9.5" fill="#10b981" class="mono">🔒 https://localhost:8000</text>
+      <path d="M75 505 L415 505 L440 535 Q442 542 432 542 L58 542 Q48 542 50 535 Z" fill="#101827" stroke="#2b3a55" stroke-width="2"/>
+    </g>
+    <!-- tarjeta de texto plano -->
+    <g id="w-msg-card" class="hidden-el">
+      <rect x="130" y="345" width="230" height="90" rx="10" fill="#f8fafc" stroke="#cbd5e1"/>
+      <text id="w-msg-text" x="145" y="372" font-size="12" fill="#1e293b"></text>
+      <text x="145" y="424" font-size="9" fill="#94a3b8" class="mono">TEXTO PLANO — solo visible aquí</text>
+    </g>
+    <!-- llave AES + IV -->
+    <g id="w-aeskey" class="hidden-el" filter="url(#f-glow)" color="#f59e0b">
+      <use href="#sym-key" x="146" y="222" width="72" height="36"/>
+      <text id="w-aes-label" x="182" y="216" text-anchor="middle" font-size="11" fill="#fbbf24" font-weight="800">AES-256</text>
+    </g>
+    <g id="w-iv" class="hidden-el">
+      <rect x="292" y="226" width="86" height="26" rx="13" fill="rgba(59,130,246,.12)" stroke="#3b82f6"/>
+      <text x="335" y="243" text-anchor="middle" font-size="11" fill="#93c5fd" class="mono">IV · 12 bytes</text>
+    </g>
+    <!-- ladrillo cifrado -->
+    <g id="w-brick-inf" class="hidden-el"><use href="#sym-brick" x="185" y="358" width="120" height="80"/>
+      <text x="245" y="456" text-anchor="middle" font-size="10" fill="#64748b" class="mono">ciphertext + tag GCM</text></g>
+    <!-- candado RSA envolviendo la llave -->
+    <g id="w-wrap" class="hidden-el">
+      <rect x="138" y="198" width="140" height="74" rx="12" fill="rgba(16,185,129,.07)" stroke="#10b981" stroke-width="2.5" stroke-dasharray="6 5"/>
+      <path d="M260 198 a14 14 0 0 1 28 0 v10 h-8 v-10 a6 6 0 0 0 -12 0 v10 h-8 Z" fill="#10b981"/>
+      <rect x="256" y="207" width="36" height="26" rx="6" fill="#10b981"/>
+      <text x="208" y="188" text-anchor="middle" font-size="11" fill="#6ee7b7" font-weight="800">RSA-OAEP · llave pública</text>
+    </g>
+  </g>
+
+  <!-- ================= TÚNEL TLS ================= -->
+  <g id="w-tls">
+    <path d="M450 420 C 560 380, 700 380, 810 420" fill="none" stroke="url(#g-tls)" stroke-width="46" stroke-linecap="round" opacity=".28"/>
+    <path d="M450 420 C 560 380, 700 380, 810 420" fill="none" stroke="url(#g-tls)" stroke-width="30" stroke-linecap="round" opacity=".35"/>
+    <path id="w-tls-path" d="M450 420 C 560 380, 700 380, 810 420" fill="none" stroke="#3b82f6" stroke-width="2.5" stroke-dasharray="10 12" opacity=".8"/>
+    <text class="w-sub" x="630" y="352" text-anchor="middle" style="font-size:12px">TÚNEL TLS 1.3 · doble pared</text>
+    <!-- espía -->
+    <g id="w-spy" opacity=".8">
+      <circle cx="630" cy="480" r="17" fill="#1f2937" stroke="#475569" stroke-width="2"/>
+      <rect x="613" y="497" width="34" height="24" rx="8" fill="#1f2937" stroke="#475569" stroke-width="2"/>
+      <circle cx="655" cy="470" r="11" fill="none" stroke="#94a3b8" stroke-width="3"/>
+      <line x1="663" y1="478" x2="674" y2="489" stroke="#94a3b8" stroke-width="3.5" stroke-linecap="round"/>
+      <text x="630" y="545" text-anchor="middle" font-size="10.5" fill="#64748b">sniffer en la red</text>
+      <text id="w-spy-sees" x="630" y="452" text-anchor="middle" font-size="10" fill="#475569" class="mono hidden-el">ve: ▓▒░▓▓░▒▓ (nada)</text>
+    </g>
+    <!-- paquete volador -->
+    <g id="w-packet" class="hidden-el"><use href="#sym-brick" x="-32" y="-22" width="64" height="44"/>
+      <use href="#sym-key" x="-18" y="-44" width="36" height="18" color="#10b981"/></g>
+  </g>
+
+  <!-- ================= SERVIDOR + DB (centro) ================= -->
+  <g id="w-server">
+    <text class="w-label" x="960" y="238" text-anchor="middle">Servidor "ciego"</text>
+    <text class="w-sub" x="960" y="256" text-anchor="middle">FastAPI + SQLite — guarda sin poder leer</text>
+    <g id="w-rack">
+      <rect x="860" y="280" width="200" height="130" rx="12" fill="#101827" stroke="#2b3a55" stroke-width="2.5"/>
+      ${[0,1,2].map(i=>`<g><rect x="874" y="${292+i*38}" width="172" height="28" rx="6" fill="#0b1120" stroke="#26334d"/>
+        <circle cx="890" cy="${306+i*38}" r="4" fill="${i===0?'#10b981':'#26334d'}" id="w-led-${i}"/>
+        <rect x="906" y="${300+i*38}" width="90" height="4" rx="2" fill="#1e293b"/>
+        <rect x="906" y="${308+i*38}" width="60" height="4" rx="2" fill="#1e293b"/></g>`).join("")}
+      <!-- ojo tachado -->
+      <g transform="translate(1024,296)"><path d="M0 8 Q10 0 20 8 Q10 16 0 8 Z" fill="none" stroke="#64748b" stroke-width="2"/>
+        <circle cx="10" cy="8" r="3" fill="#64748b"/><line x1="-2" y1="18" x2="22" y2="-2" stroke="#ef4444" stroke-width="2.6" stroke-linecap="round"/></g>
+    </g>
+    <!-- base de datos -->
+    <g id="w-db">
+      <path d="M880 470 a80 22 0 0 1 160 0 v120 a80 22 0 0 1 -160 0 Z" fill="#0d1424" stroke="#2b3a55" stroke-width="2.5"/>
+      <ellipse cx="960" cy="470" rx="80" ry="22" fill="#16203a" stroke="#2b3a55" stroke-width="2.5"/>
+      <text x="960" y="475" text-anchor="middle" font-size="11" fill="#64748b" class="mono">safedrop.db</text>
+      <g id="w-db-bricks"></g>
+    </g>
+    <!-- cadena de bitácora -->
+    <g id="w-chain">
+      <text class="w-sub" x="960" y="668" text-anchor="middle" style="font-size:12px">BITÁCORA ENCADENADA · SHA-256</text>
+      <g id="w-chain-links"></g>
+    </g>
+  </g>
+
+  <!-- ================= CUSTODIOS / SHARES (arriba) ================= -->
+  <g id="w-custodios" class="hidden-el">
+    <text class="w-label" x="960" y="46" text-anchor="middle" style="fill:#a78bfa">Custodios de la llave (2 de 3)</text>
+    
+    <!-- Share 1: USB -->
+    <g id="w-share-1" transform="translate(745,70)" color="#3b82f6" filter="url(#f-glow)">
+      <use href="#sym-usb" x="0" y="0" width="30" height="60"/>
+      <text x="15" y="80" text-anchor="middle" font-size="11.5" fill="#93c5fd" font-weight="800">SHARE 1</text>
+      <text x="15" y="94" text-anchor="middle" font-size="9.5" fill="#6b7280">USB · Custodio A</text>
+    </g>
+
+    <!-- Share 2: Safe -->
+    <g id="w-share-2" transform="translate(940,80)" color="#10b981" filter="url(#f-glow)">
+      <use href="#sym-safe" x="0" y="0" width="40" height="40"/>
+      <text x="20" y="70" text-anchor="middle" font-size="11.5" fill="#6ee7b7" font-weight="800">SHARE 2</text>
+      <text x="20" y="84" text-anchor="middle" font-size="9.5" fill="#6b7280">Caja Fuerte · B</text>
+    </g>
+
+    <!-- Share 3: Keycard -->
+    <g id="w-share-3" transform="translate(1140,80)" color="#a78bfa" filter="url(#f-glow)">
+      <use href="#sym-keycard" x="0" y="0" width="40" height="40"/>
+      <text x="20" y="70" text-anchor="middle" font-size="11.5" fill="#c4b5fd" font-weight="800">SHARE 3</text>
+      <text x="20" y="84" text-anchor="middle" font-size="9.5" fill="#6b7280">Tarjeta · Custodio C</text>
+    </g>
+  </g>
+  <!-- llave privada (nace y muere) -->
+  <g id="w-privkey" class="hidden-el" color="#ef4444" filter="url(#f-glow)">
+    <use href="#sym-usb" x="945" y="90" width="30" height="60"/>
+    <text x="960" y="76" text-anchor="middle" font-size="12" fill="#fca5a5" font-weight="800">LLAVE PRIVADA RSA (USB)</text>
+  </g>
+
+  <!-- ================= AUDITOR (derecha) ================= -->
+  <g id="w-auditor">
+    <text class="w-label" x="1360" y="268" text-anchor="middle">Auditor</text>
+    <text class="w-sub" x="1360" y="286" text-anchor="middle">Navegador aislado — único lugar de lectura</text>
+    <rect x="1210" y="300" width="300" height="230" rx="14" fill="url(#g-screen)" stroke="#2b3a55" stroke-width="2.5"/>
+    <rect x="1210" y="300" width="300" height="26" rx="14" fill="#182238"/>
+    <circle cx="1227" cy="313" r="4" fill="#ef4444"/><circle cx="1241" cy="313" r="4" fill="#f59e0b"/><circle cx="1255" cy="313" r="4" fill="#10b981"/>
+    <text x="1272" y="317" font-size="9.5" fill="#10b981" class="mono">🔒 /auditor.html · JWT ✓</text>
+    <!-- marco RAM -->
+    <rect id="w-ram" x="1230" y="345" width="260" height="165" rx="10" fill="none" stroke="#475569" stroke-width="1.6" stroke-dasharray="5 5"/>
+    <text x="1240" y="362" font-size="9.5" fill="#64748b" class="mono">RAM — memoria volátil</text>
+    <g id="w-brick-aud" class="hidden-el"><use href="#sym-brick" x="1252" y="380" width="96" height="64"/></g>
+    <g id="w-privkey-aud" class="hidden-el" color="#ef4444"><use href="#sym-key" x="1380" y="386" width="84" height="42"/></g>
+    <g id="w-aeskey-aud" class="hidden-el" color="#f59e0b"><use href="#sym-key" x="1396" y="446" width="66" height="33"/></g>
+    <g id="w-msg-aud" class="hidden-el">
+      <rect x="1252" y="380" width="216" height="106" rx="10" fill="#f8fafc" stroke="#cbd5e1"/>
+      <text id="w-msg-aud-text" x="1266" y="408" font-size="11.5" fill="#1e293b"></text>
+      <text x="1266" y="472" font-size="9" fill="#16a34a" class="mono">✓ tag GCM verificado — íntegro</text>
+    </g>
+  </g>
+  <!-- túnel servidor → auditor -->
+  <path id="w-tls2" d="M1070 430 C 1120 400, 1160 400, 1200 430" fill="none" stroke="url(#g-tls)" stroke-width="28" stroke-linecap="round" opacity=".25"/>
+
+  <!-- ================= ATACANTE (abajo) ================= -->
+  <g id="w-attacker" class="hidden-el">
+    <g transform="translate(680,720)">
+      <path d="M30 62 Q30 18 62 14 Q94 18 94 62 Z" fill="#1a0f14" stroke="#ef4444" stroke-width="2.5"/>
+      <circle cx="62" cy="42" r="14" fill="#0b0f19" stroke="#ef4444" stroke-width="2"/>
+      <text x="62" y="92" text-anchor="middle" font-size="12" fill="#fca5a5" font-weight="800">ADMIN MALICIOSO</text>
+      <text x="62" y="108" text-anchor="middle" font-size="9.5" fill="#7f5860">acceso directo a safedrop.db</text>
+    </g>
+    <path id="w-attack-path" d="M790 760 C 860 740, 900 680, 940 620" fill="none" stroke="#ef4444" stroke-width="2.5" stroke-dasharray="8 8" opacity="0"/>
+  </g>
+</g>`;
+
+/* ---------- 2. CRIPTOGRAFÍA REAL (Web Crypto + GF(256), sin simulacros) ---------- */
+const hex = b => [...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,"0")).join("");
+const b64 = b => btoa(String.fromCharCode(...new Uint8Array(b)));
+const enc = new TextEncoder(), dec = new TextDecoder();
+async function sha256(str){ return hex(await crypto.subtle.digest("SHA-256", enc.encode(str))); }
+
+/* GF(256) — mismo polinomio 0x11d que backend/crypto_utils.py */
+function gfMul(a,b){let p=0;for(let i=0;i<8;i++){if(b&1)p^=a;const c=a&0x80;a=(a<<1)&0x1ff;if(c)a^=0x11d;b>>=1;}return p&0xff;}
+function gfPow(a,n){let r=1;while(n>0){if(n&1)r=gfMul(r,a);a=gfMul(a,a);n>>=1;}return r;}
+const gfInv = a => gfPow(a,254);
+function sssSplit(bytes){ // k=2, n=3 — réplica de split_secret_shamir
+  const shares={1:[],2:[],3:[]}, rnd=new Uint8Array(bytes.length); crypto.getRandomValues(rnd);
+  bytes.forEach((S,i)=>{const a1=rnd[i]; for(const x of [1,2,3]) shares[x].push(S ^ gfMul(a1,x));});
+  const out={}; for(const x of [1,2,3]) out[x]=`SD-SHARE-v1-${x}-${b64(new Uint8Array(shares[x]))}`;
+  return out;
+}
+function sssCombine(shareA, shareB){ // interpolación de Lagrange en x=0 con 2 puntos
+  const parse=s=>{const p=s.split("-"); return {x:+p[3], y:Uint8Array.from(atob(p.slice(4).join("-")),c=>c.charCodeAt(0))};};
+  const A=parse(shareA), B=parse(shareB);
+  // l_A(0) = x_B / (x_B ⊕ x_A) ; l_B(0) = x_A / (x_A ⊕ x_B)   (resta = XOR en GF(256))
+  const lA=gfMul(B.x, gfInv(A.x^B.x)), lB=gfMul(A.x, gfInv(A.x^B.x));
+  const out=new Uint8Array(A.y.length);
+  for(let i=0;i<out.length;i++) out[i]=gfMul(A.y[i],lA)^gfMul(B.y[i],lB);
+  return out;
+}
+
+/* Pipeline completo, se recalcula cuando cambia el mensaje */
+const K = { msg:"He detectado anomalías fiscales en el sector 3.", attachedFile: "evidencia.pdf", ready:false };
+async function runPipeline(){
+  K.ready=false;
+  // 1. Par RSA-OAEP 2048 de la organización (efímero para la demo)
+  if(!K.rsa){
+    K.rsa = await crypto.subtle.generateKey({name:"RSA-OAEP",modulusLength:2048,publicExponent:new Uint8Array([1,0,1]),hash:"SHA-256"},true,["encrypt","decrypt"]);
+    K.pubSpki = await crypto.subtle.exportKey("spki", K.rsa.publicKey);
+    K.privPkcs8 = new Uint8Array(await crypto.subtle.exportKey("pkcs8", K.rsa.privateKey));
+    K.shares = sssSplit(K.privPkcs8);                    // Shamir 2-of-3 sobre la llave privada REAL
+  }
+  // 2. Llave AES-GCM 256 + IV de 12 bytes
+  K.aes = await crypto.subtle.generateKey({name:"AES-GCM",length:256},true,["encrypt","decrypt"]);
+  K.aesRaw = new Uint8Array(await crypto.subtle.exportKey("raw",K.aes));
+  K.iv = crypto.getRandomValues(new Uint8Array(12));
+  // 3. Cifrado del reporte (los últimos 16 bytes del resultado son el tag GCM)
+  K.cipher = new Uint8Array(await crypto.subtle.encrypt({name:"AES-GCM",iv:K.iv}, K.aes, enc.encode(K.msg)));
+  K.tag = K.cipher.slice(-16);
+
+  // 3b. Cifrado de archivos adjuntos (si se seleccionó uno)
+  if (K.attachedFile !== "none") {
+    K.fileIv = crypto.getRandomValues(new Uint8Array(12));
+    const fileContent = K.attachedFile === "evidencia.pdf" ?
+      "[PDF: Evidencia de desvíos de fondos por $240,000 en el sector 3. Firmado por gerente.]" :
+      "[JPG: Captura de pantalla de transferencia de fondos no autorizada en el portal bancario.]";
+    K.fileCipher = new Uint8Array(await crypto.subtle.encrypt({name:"AES-GCM",iv:K.fileIv}, K.aes, enc.encode(fileContent)));
+    K.fileTag = K.fileCipher.slice(-16);
+  } else {
+    K.fileIv = null; K.fileCipher = null; K.fileTag = null;
+  }
+
+  // 4. Envoltura RSA-OAEP de la llave AES
+  K.wrapped = new Uint8Array(await crypto.subtle.encrypt({name:"RSA-OAEP"}, K.rsa.publicKey, K.aesRaw));
+  K.payload = { report_text_encrypted:b64(K.cipher), report_iv:b64(K.iv), encrypted_aes_key:b64(K.wrapped) };
+  if (K.attachedFile !== "none") {
+    K.payload.file_name = K.attachedFile;
+    K.payload.file_iv = b64(K.fileIv);
+    K.payload.file_data_encrypted = b64(K.fileCipher);
+  }
+  K.ready=true;
+}
+/* Descifrado del capítulo 4 — usa la llave reconstruida por Shamir, no la original */
+async function auditorDecrypt(shareIds){
+  const rebuilt = sssCombine(K.shares[shareIds[0]], K.shares[shareIds[1]]);
+  K.rebuiltOk = rebuilt.length===K.privPkcs8.length && rebuilt.every((v,i)=>v===K.privPkcs8[i]);
+  const priv = await crypto.subtle.importKey("pkcs8",rebuilt,{name:"RSA-OAEP",hash:"SHA-256"},false,["decrypt"]);
+  const aesRaw = await crypto.subtle.decrypt({name:"RSA-OAEP"},priv,K.wrapped);
+  const aes = await crypto.subtle.importKey("raw",aesRaw,{name:"AES-GCM"},false,["decrypt"]);
+  const plain = await crypto.subtle.decrypt({name:"AES-GCM",iv:K.iv},aes,K.cipher);
+  const plainText = dec.decode(plain);
+  
+  if (K.attachedFile !== "none" && K.fileCipher) {
+    const plainFile = await crypto.subtle.decrypt({name:"AES-GCM",iv:K.fileIv},aes,K.fileCipher);
+    K.decryptedFile = dec.decode(plainFile);
+  } else {
+    K.decryptedFile = null;
+  }
+  return plainText;
+}
+
+/* Bitácora encadenada — misma fórmula que database.compute_log_hash */
+const CHAIN = { logs:[], corruptIdx:-1 };
+async function buildChain(){
+  const seed=[["SYSTEM_INIT","sistema","Base de datos inicializada"],["USER_LOGIN","auditor","Inicio de sesión JWT válido"],
+    ["REPORT_SUBMITTED","anónimo","Reporte #1 recibido (cifrado)"],["REPORT_VIEWED","auditor","Auditor consultó reporte #1"],
+    ["USER_LOGIN","admin","Inicio de sesión JWT válido"],["INTEGRITY_CHECK","admin","Verificación de bitácora: OK"]];
+  CHAIN.logs=[]; CHAIN.corruptIdx=-1; let prev="0".repeat(64);
+  for(let i=0;i<seed.length;i++){
+    const [action,user,details]=seed[i], ts=new Date(Date.now()-(seed.length-i)*3.6e6).toISOString();
+    const h=await sha256(`${i+1}|${ts}|${action}|${user}|${details}|${prev}`);
+    CHAIN.logs.push({id:i+1,ts,action,user,details,prev,hash:h}); prev=h;
+  }
+}
+async function recomputeHash(l){ return sha256(`${l.id}|${l.ts}|${l.action}|${l.user}|${l.details}|${l.prev}`); }
+async function verifyChain(){ // réplica de verify_audit_trail_integrity
+  let prev="0".repeat(64); const res=[];
+  for(const l of CHAIN.logs){
+    const expected=await recomputeHash({...l,prev});
+    const ok = expected===l.hash && l.prev===prev;
+    res.push({id:l.id, ok, tainted:res.some(r=>!r.ok)}); prev=l.hash;
+  }
+  return res;
+}
+
+/* ---------- 3. UTILIDADES DE UI ---------- */
+const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
+const esc=s=>s.replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+function truncHex(h,n=24){return h.length>n?`<span class="v trunc" data-full="${h}">${h.slice(0,n)}… <i class="fa-solid fa-expand" style="font-size:.7em"></i></span>`:`<span class="v">${h}</span>`;}
+document.addEventListener("click",e=>{
+  const t=e.target.closest(".v.trunc"); if(!t)return;
+  t.outerHTML=`<span class="v">${t.dataset.full}</span>`;
+});
+function fitSvgText(el, str, max=30){ el.textContent = str.length>max? str.slice(0,max-1)+"…" : str; }
+
+/* Glosario */
+const GLOSSARY = {
+  "AES-GCM":"Cifrado simétrico autenticado. Además de ocultar los datos, produce un <b>tag</b> de 16 bytes: si un solo bit del ciphertext cambia, el descifrado falla. Es la 'C' y parte de la 'I' de la tríada CIA.",
+  "IV":"Vector de Inicialización: 12 bytes aleatorios que garantizan que el mismo mensaje cifrado dos veces produzca resultados distintos. No es secreto, pero jamás debe repetirse con la misma llave.",
+  "RSA-OAEP":"Cifrado asimétrico con padding aleatorio (OAEP + MGF1/SHA-256). Se usa solo para envolver la pequeña llave AES: cifrar el reporte entero con RSA sería lentísimo.",
+  "TLS":"La capa de transporte cifrada (HTTPS). Aquí es la pared <b>exterior</b>: aunque se rompiera, dentro viaja otro cifrado que el servidor tampoco puede abrir.",
+  "JWT":"JSON Web Token: credencial firmada que prueba el rol (auditor/admin) ante la API. Autoriza <b>pedir</b> datos, pero no sirve para descifrarlos.",
+  "Shamir":"Shamir's Secret Sharing: divide un secreto en n fragmentos de los que cualquier subconjunto de k lo reconstruye, y k−1 no revelan absolutamente nada. Aquí: k=2, n=3, byte a byte en GF(256).",
+  "GF(256)":"Campo de Galois de 256 elementos (polinomio 0x11d). Permite hacer la aritmética de Shamir con bytes exactos: la suma es XOR y la división siempre existe.",
+  "SHA-256":"Función hash: resume cualquier dato en 256 bits. Cambiar una letra de la entrada cambia ~la mitad de los bits de salida (efecto avalancha), lo que hace visible cualquier manipulación.",
+  "Zero-Knowledge":"Arquitectura de conocimiento cero: el servidor presta servicio (guardar, listar, entregar) sin poder conocer jamás el contenido. La confidencialidad deja de depender de la buena fe del administrador.",
+  "Argon2id":"Algoritmo de hashing de contraseñas ganador de la Password Hashing Competition; resistente a fuerza bruta con GPU/ASIC. Protege las credenciales de admin y auditor.",
+  "OAEP":"Optimal Asymmetric Encryption Padding: mezcla la llave AES con bytes aleatorios (semilla + máscaras MGF1) antes de la exponenciación RSA, dando seguridad semántica contra ataques de texto elegido."
+};
+const glossEl=$("#j-gloss");
+document.addEventListener("click",e=>{
+  const t=e.target.closest(".term");
+  if(!t){ if(!e.target.closest("#j-gloss")) glossEl.style.display="none"; return; }
+  const key=t.dataset.g||t.textContent.trim();
+  const def=GLOSSARY[key]; if(!def) return;
+  glossEl.innerHTML=`<h6>${key}</h6>${def}`;
+  glossEl.style.display="block";
+  const r=t.getBoundingClientRect(), host=$("#j-stage-wrap").getBoundingClientRect();
+  glossEl.style.left=Math.min(Math.max(r.left-host.left-140, 10), host.width-340)+"px";
+  glossEl.style.top=Math.max(r.top-host.top-glossEl.offsetHeight-12, 10)+"px";
+});
+const T=(k,label)=>`<span class="term" data-g="${k}">${label||k}</span>`;
+
+/* ---------- 4. CÁMARA (viewBox animado sobre el mundo único) ---------- */
+const stage=$("#j-stage");
+stage.innerHTML=WORLD;
+const FULL={x:0,y:0,w:1600,h:900};
+const REGIONS={
+  world:  {...FULL, name:"Sistema completo"},
+  informante:{x:40,y:150,w:480,h:470, name:"Navegador del informante"},
+  tls:    {x:380,y:280,w:520,h:330, name:"Red / túnel TLS"},
+  server: {x:790,y:200,w:360,h:540, name:"Servidor FastAPI + DB"},
+  chain:  {x:700,y:560,w:540,h:220, name:"Bitácora encadenada"},
+  custodios:{x:690,y:20,w:560,h:220, name:"Custodios de la llave"},
+  auditor:{x:1170,y:220,w:390,h:360, name:"Navegador del auditor"},
+  attacker:{x:600,y:560,w:520,h:330, name:"Zona del ataque"},
+};
+const cam={...FULL};
+function setViewBox(){ stage.setAttribute("viewBox",`${cam.x} ${cam.y} ${cam.w} ${cam.h}`);
+  const m=$("#j-mini-cam"); m.setAttribute("x",cam.x);m.setAttribute("y",cam.y);m.setAttribute("width",cam.w);m.setAttribute("height",cam.h);}
+function cameraTo(region,{dur=REDUCED?0.15:0.9}={}){
+  const r=typeof region==="string"?REGIONS[region]:region;
+  // margen proporcional
+  const pad=r===REGIONS.world?0:Math.min(r.w,r.h)*0.10;
+  gsap.to(cam,{x:r.x-pad,y:r.y-pad,w:r.w+pad*2,h:r.h+pad*2,duration:dur,ease:"power3.inOut",onUpdate:setViewBox});
+}
+setViewBox();
+$("#j-minimap").addEventListener("click",()=>cameraTo("world"));
+
+/* Breadcrumb según nivel de zoom del beat */
+function renderCrumb(beat){
+  const trail=[["Sistema","world"]];
+  if(beat.zoom && beat.zoom!=="world") trail.push([REGIONS[beat.zoom].name, beat.zoom]);
+  if(beat.lens) trail.push([beat.lensName||"Detalle", null]);
+  $("#j-crumb").innerHTML=trail.map(([n,r],i)=>{
+    const last=i===trail.length-1;
+    return `${i?'<span class="sep">›</span>':""}<button ${last?'class="here"':`data-r="${r}"`}>${n}</button>`;
+  }).join("");
+  $$("#j-crumb button[data-r]").forEach(b=>b.onclick=()=>{ if(b.dataset.r==="world") jumpToLevel0(); else cameraTo(b.dataset.r); });
+}
+function jumpToLevel0(){ closeLens(); cameraTo("world"); }
+
+/* Lente de detalle (Nivel 2) */
+function openLens(html,name){ $("#j-lens-card").innerHTML=html; $("#j-lens").classList.add("on");
+  if(!REDUCED) gsap.fromTo("#j-lens-card",{scale:.92,opacity:0},{scale:1,opacity:1,duration:.45,ease:"back.out(1.4)"}); }
+function closeLens(){ $("#j-lens").classList.remove("on"); }
+
+/* ---------- 5. ESTADO DEL MUNDO (scrubbing bidireccional honesto) ---------- */
+/* Cada beat aporta un parche; renderWorld pinta el estado ACUMULADO instantáneamente,
+   de modo que saltar a cualquier beat (adelante o atrás) reconstruye la escena exacta. */
+const defaultState={msg:false,aesKey:false,ivChip:false,encrypted:false,wrapped:false,packet:0,spySees:false,
+  dbBricks:0,chain:0,custodios:false,privkey:false,privShred:false,brickAud:false,privAud:false,aesAud:false,
+  msgAud:false,attacker:false,attackLine:false,verify:null,accent:"--ch1"};
+function stateAt(i){ let s={...defaultState}; for(let k=0;k<=i;k++) Object.assign(s,BEATS[k].state||{}); return s; }
+function show(sel,on){ const el=$(sel); if(el) gsap.set(el,{opacity:on?1:0}); }
+function renderWorld(s){
+  show("#w-aeskey",s.aesKey); show("#w-aes-label",s.aesKey && !s.wrapped); show("#w-iv",s.ivChip);
+  show("#w-brick-inf",s.encrypted); show("#w-msg-card",s.msg&&!s.encrypted);
+  show("#w-wrap",s.wrapped);
+  show("#w-spy-sees",s.spySees);
+  // paquete en tránsito: 0 oculto, 1 en medio del túnel, 2 entregado (oculto)
+  const pk=$("#w-packet"); gsap.set(pk,{opacity:s.packet===1?1:0}); if(s.packet===1) placeOnPath(pk,.5);
+  // ladrillos en DB
+  const bricksG=$("#w-db-bricks");
+  if(bricksG.childElementCount!==s.dbBricks){ bricksG.innerHTML="";
+    for(let i=0;i<s.dbBricks;i++) bricksG.insertAdjacentHTML("beforeend",
+      `<use href="#sym-brick" x="${905+(i%2)*58}" y="${495+Math.floor(i/2)*46}" width="52" height="36"/>`); }
+  renderChain(s.chain, s.verify==="run" ? (CHAIN.verifyCache||null) : null);
+  show("#w-custodios",s.custodios);
+  const pkey=$("#w-privkey"); gsap.set(pkey,{opacity:s.privkey&&!s.privShred?1:0});
+  show("#w-brick-aud",s.brickAud&&!s.msgAud); show("#w-privkey-aud",s.privAud); show("#w-aeskey-aud",s.aesAud);
+  show("#w-msg-aud",s.msgAud);
+  show("#w-attacker",s.attacker); gsap.set("#w-attack-path",{opacity:s.attackLine?1:0});
+  // acento del capítulo
+  document.documentElement.style.setProperty("--accent",getComputedStyle(document.documentElement).getPropertyValue(s.accent));
+  fitSvgText($("#w-msg-text"), K.msg); fitSvgText($("#w-msg-aud-text"), K.msg, 28);
+}
+function placeOnPath(el,t){ const p=$("#w-tls-path"), L=p.getTotalLength(), pt=p.getPointAtLength(L*t);
+  gsap.set(el,{x:pt.x,y:pt.y-16}); }
+function renderChain(n, verify){
+  const g=$("#w-chain-links"); g.innerHTML="";
+  const x0=960-(n*74)/2+8;
+  for(let i=0;i<n;i++){
+    const l=CHAIN.logs[i]; if(!l) break;
+    let stroke="#475569", fill="rgba(255,255,255,.03)";
+    const v = verify ? verify[i] : null;
+    if(v){
+      if(!v.ok){stroke="#ef4444";fill="rgba(239,68,68,.16)";}
+      else if(v.tainted){stroke="#f59e0b";fill="rgba(245,158,11,.08)";}
+      else {stroke="#10b981";fill="rgba(16,185,129,.08)";}
+    } else if(!verify && CHAIN.corruptIdx===i){stroke="#ef4444";fill="rgba(239,68,68,.12)";}
+    g.insertAdjacentHTML("beforeend",`<g class="chain-link" data-i="${i}">
+      <rect x="${x0+i*74}" y="690" width="60" height="42" rx="9" fill="${fill}" stroke="${stroke}" stroke-width="2.4"/>
+      <text x="${x0+i*74+30}" y="707" text-anchor="middle" font-size="9" fill="#64748b" class="mono">#${l.id} ${l.action.split("_")[0]}</text>
+      <text x="${x0+i*74+30}" y="722" text-anchor="middle" font-size="8.5" fill="${stroke}" class="mono">${l.hash.slice(0,6)}…</text>
+      ${i<n-1?`<line x1="${x0+i*74+60}" y1="711" x2="${x0+i*74+74}" y2="711" stroke="${stroke}" stroke-width="2.4"/>`:""}</g>`);
+  }
+}
+
+/* ---------- 6. MOTOR DE BEATS + REPRODUCCIÓN ---------- */
+let BEATS=[]; const CHAPTERS=[
+  {id:1,name:"El Nacimiento del Secreto",color:"--ch1"},
+  {id:2,name:"El Guardián Ciego",color:"--ch2"},
+  {id:3,name:"La Llave Rota en Tres",color:"--ch3"},
+  {id:4,name:"El Ritual del Auditor",color:"--ch4"},
+  {id:5,name:"El Ataque y la Cadena",color:"--ch5"},
+];
+let cur=-1, playing=false, playTimer=null, speed=1;
+
+async function goTo(i,{fromUser=true}={}){
+  if(i<0||i>=BEATS.length) return;
+  clearTimeout(playTimer);
+  cur=i; const b=BEATS[i];
+  closeLens(); glossEl.style.display="none";
+  renderWorld(stateAt(i));
+  cameraTo(b.zoom||"world");
+  renderCrumb(b);
+  // narrador
+  const ch=CHAPTERS[b.ch-1];
+  $("#j-chapterchip").textContent=`Capítulo ${ch.id} · ${ch.name}`;
+  $("#j-narr-kicker").textContent=`Capítulo ${ch.id} — beat ${b.n} de ${chapterLen(b.ch)}`;
+  $("#j-narr-title").textContent=b.title;
+  $("#j-narr-body").innerHTML=b.text+(b.note?`<span class="beatnote"><i class="fa-solid fa-lightbulb"></i> ${b.note}</span>`:"");
+  const cta=$("#j-cta");
+  cta.innerHTML=`<span>${b.cta||(i===BEATS.length-1?"Reiniciar la historia":"Continuar")}</span><i class="fa-solid fa-${i===BEATS.length-1?"rotate-left":"arrow-right"}"></i>`;
+  cta.disabled=!!b.lockCta;
+  // panel ingeniero
+  renderEng(b);
+  // timeline
+  renderTimelineState();
+  // animación de entrada del beat
+  if(b.enter) await b.enter();
+  // autoplay
+  if(playing && !b.interactive) scheduleNext(b);
+  if(playing && b.interactive) setPlay(false); // los beats interactivos pausan el autoplay
+}
+function chapterLen(ch){ return BEATS.filter(b=>b.ch===ch).length; }
+function scheduleNext(b){ clearTimeout(playTimer);
+  playTimer=setTimeout(()=>{ if(cur<BEATS.length-1) goTo(cur+1); else setPlay(false); },(b.dur||6500)/speed); }
+function setPlay(on){ playing=on; $("#j-play").innerHTML=`<i class="fa-solid fa-${on?"pause":"play"}"></i>`;
+  if(on){ if(cur<0) goTo(0); else scheduleNext(BEATS[cur]); } else clearTimeout(playTimer); }
+
+$("#j-play").onclick=()=>setPlay(!playing);
+$("#j-next").onclick=()=>goTo(Math.min(cur+1,BEATS.length-1));
+$("#j-prev").onclick=()=>goTo(Math.max(cur-1,0));
+$("#j-restart").onclick=()=>restart();
+$("#j-speed").onchange=e=>{speed=+e.target.value; if(playing&&cur>=0) scheduleNext(BEATS[cur]);};
+$("#j-cta").onclick=()=>{ const b=BEATS[cur]; if(b&&b.onCta){b.onCta();return;} if(cur===BEATS.length-1) restart(); else goTo(cur+1); };
+document.addEventListener("keydown",e=>{
+  if(e.target.matches("textarea,input")) return;
+  if(e.key==="ArrowRight") goTo(Math.min(cur+1,BEATS.length-1));
+  if(e.key==="ArrowLeft") goTo(Math.max(cur-1,0));
+  if(e.key===" "){e.preventDefault();setPlay(!playing);}
+  if(e.key==="Escape") jumpToLevel0();
+});
+async function restart(){ setPlay(false); CHAIN.corruptIdx=-1; await buildChain(); await runPipeline(); goTo(0); }
+
+/* Línea de tiempo con capítulos y ticks */
+function buildTimeline(){
+  const tl=$("#j-timeline"); tl.innerHTML="";
+  CHAPTERS.forEach(ch=>{
+    const beats=BEATS.map((b,i)=>({b,i})).filter(o=>o.b.ch===ch.id);
+    const seg=document.createElement("div"); seg.className="j-seg";
+    seg.style.setProperty("--seg-color",`var(${ch.color})`);
+    seg.innerHTML=`<div class="j-seg-label">${ch.id}. ${ch.name}</div>
+      <div class="j-seg-track">${beats.map(o=>`<div class="j-tick" data-i="${o.i}" data-tip="${esc(o.b.title)}"></div>`).join("")}</div>`;
+    tl.appendChild(seg);
+  });
+  $$(".j-tick").forEach(t=>t.onclick=()=>goTo(+t.dataset.i));
+}
+function renderTimelineState(){
+  $$(".j-tick").forEach(t=>{const i=+t.dataset.i;
+    t.classList.toggle("done",i<cur); t.classList.toggle("now",i===cur);});
+  $$(".j-seg").forEach((s,ci)=>s.classList.toggle("active",BEATS[cur]&&BEATS[cur].ch===ci+1));
+}
+
+/* Panel de Modo Ingeniero */
+let engOn=false;
+$("#j-engtoggle").onclick=()=>{engOn=!engOn;$("#j-engtoggle").classList.toggle("on",engOn);
+  $("#j-eng").classList.toggle("on",engOn&&!!(BEATS[cur]&&BEATS[cur].eng));};
+function renderEng(b){
+  $("#j-eng").classList.toggle("on",engOn&&!!b.eng);
+  if(!b.eng) return;
+  const e=typeof b.eng==="function"?b.eng():b.eng;
+  $("#j-eng-file").textContent=e.file||"—";
+  $("#j-eng-body").innerHTML=e.body||"";
+}
+
+/* ---------- 7. PANELES DE LENTE (Nivel 2, legible en HTML) ---------- */
+function panelKeyMaterial(){
+  let fileInfo = "";
+  if (K.attachedFile !== "none" && K.fileIv) {
+    fileInfo = `<div class="hexrow"><span class="k">IV del Archivo (${K.attachedFile})</span><span class="v">0x${hex(K.fileIv)}</span></div>`;
+  }
+  return `<h4 class="lens-title"><i class="fa-solid fa-dice"></i> Material criptográfico real (recién generado)</h4>
+  <div class="hexrow"><span class="k">Llave AES-GCM · 256 bits</span>${truncHex("0x"+hex(K.aesRaw),34)}</div>
+  <div class="hexrow"><span class="k">IV de mensaje · 12 bytes</span><span class="v">0x${hex(K.iv)}</span></div>
+  ${fileInfo}
+  <div class="hexrow"><span class="k">Origen</span><span class="v">window.crypto.getRandomValues() — CSPRNG del navegador</span></div>
+  <p class="lens-note">Estos bytes no son una simulación: fueron generados por la API Web Crypto de tu navegador hace un instante.
+  2<sup>256</sup> llaves posibles — probar todas excede la energía disponible en el sistema solar. Pulsa cualquier valor truncado para expandirlo.</p>`;
+}
+function panelGCM(){
+  const plain=enc.encode(K.msg);
+  const chars=[...K.msg].slice(0,18);
+  const rows=chars.map((c,i)=>`<div class="gcm-ch" data-i="${i}">${esc(c)}</div>`).join("");
+  const p0=plain[0], c0=K.cipher[0], k0=p0^c0; // keystream real: P ⊕ C
+  let fileInfo = "";
+  if (K.attachedFile !== "none" && K.fileTag) {
+    fileInfo = `<div class="gcm-math" style="margin-top:.5rem">
+      Archivo adjunto: <span class="hl">${K.attachedFile}</span> (cifrado con AES-GCM, tag independiente)<br>
+      Sello final de archivo: <span class="ok">tag GCM = 0x${hex(K.fileTag).slice(0, 16)}…</span>
+    </div>`;
+  }
+  return `<h4 class="lens-title"><i class="fa-solid fa-cubes"></i> Dentro de AES-GCM: modo contador</h4>
+  <p class="lens-note" style="margin:0 0 .4rem">GCM cifra generando un <b>keystream</b> a partir de (llave, IV, contador) y lo mezcla con tu mensaje mediante XOR. Mira tu propio mensaje transformarse:</p>
+  <div class="gcm-line" id="gcm-line">${rows}</div>
+  <div class="gcm-math">
+    Primer byte de tu mensaje: <span class="hl">'${esc(K.msg[0]||"?")}'</span> = 0x${p0.toString(16).padStart(2,"0")}<br>
+    Byte de keystream (real, derivado de llave+IV): <span class="hl">0x${k0.toString(16).padStart(2,"0")}</span><br>
+    XOR: 0x${p0.toString(16).padStart(2,"0")} ⊕ 0x${k0.toString(16).padStart(2,"0")} = <span class="hl">0x${c0.toString(16).padStart(2,"0")}</span> → primer byte del ciphertext<br>
+    Sello final del mensaje: <span class="ok">tag GCM = 0x${hex(K.tag).slice(0,16)}…</span> (16 bytes que autentican todo el cuerpo)
+  </div>
+  ${fileInfo}`;
+}
+function animateGCM(){ const cells=$$("#gcm-line .gcm-ch"); cells.forEach((c,i)=>{
+  setTimeout(()=>{c.classList.add("flip"); c.textContent=K.cipher[i].toString(16).padStart(2,"0");},(REDUCED?0:120*i)+300);});}
+function panelOAEP(){
+  return `<h4 class="lens-title"><i class="fa-solid fa-box"></i> Envoltura RSA-OAEP de la llave AES</h4>
+  <div class="gcm-math">
+    <span class="hl">1.</span> Llave AES (32 bytes) + hash de etiqueta + <b>semilla aleatoria</b><br>
+    <span class="hl">2.</span> Máscaras ${T("OAEP","MGF1/SHA-256")} mezclan todo → mismo secreto, envoltura distinta cada vez<br>
+    <span class="hl">3.</span> Exponenciación modular: C = M<sup>e</sup> mod N &nbsp;(e=65537, N de 2048 bits)
+  </div>
+  <div class="hexrow" style="margin-top:.7rem"><span class="k">Llave AES en claro</span>${truncHex("0x"+hex(K.aesRaw),30)}</div>
+  <div class="hexrow"><span class="k">Llave AES envuelta (256 B)</span>${truncHex("0x"+hex(K.wrapped),30)}</div>
+  <p class="lens-note">Sin ${T("OAEP")}, cifrar dos veces la misma llave daría el mismo resultado y filtaría información. El padding aleatorio da <b>seguridad semántica</b>: cada envoltura es única. Esta única llave envuelta da acceso tanto al mensaje como a los archivos adjuntos cifrados.</p>`;
+}
+function panelSQLiteRow(){
+  let fileInfo = "";
+  if (K.attachedFile !== "none" && K.fileCipher) {
+    fileInfo = `<div class="hexrow"><span class="k">file_name</span><span class="v">${K.attachedFile}</span></div>
+    <div class="hexrow"><span class="k">file_iv</span><span class="v">${b64(K.fileIv)}</span></div>
+    <div class="hexrow"><span class="k">file_data_encrypted</span>${truncHex(b64(K.fileCipher),34)}</div>`;
+  }
+  return `<h4 class="lens-title"><i class="fa-solid fa-table"></i> La fila tal como reposa en SQLite</h4>
+  <div class="hexrow"><span class="k">id</span><span class="v">1</span></div>
+  <div class="hexrow"><span class="k">report_text_encrypted</span>${truncHex(K.payload.report_text_encrypted,34)}</div>
+  <div class="hexrow"><span class="k">report_iv</span><span class="v">${K.payload.report_iv}</span></div>
+  <div class="hexrow"><span class="k">encrypted_aes_key</span>${truncHex(K.payload.encrypted_aes_key,34)}</div>
+  ${fileInfo}
+  <div class="hexrow"><span class="k">created_at</span><span class="v">${new Date().toISOString()} <i style="color:var(--text-dark)">(sin IP, sin user-agent)</i></span></div>
+  <p class="lens-note">Este es el ${T("Zero-Knowledge","conocimiento cero")} en la práctica: el administrador de esta base de datos, con acceso total, ve exactamente lo mismo que tú aquí. Nada más.</p>`;
+}
+function panelTryDecrypt(){
+  return `<h4 class="lens-title"><i class="fa-solid fa-hand"></i> Inténtalo tú: lee el reporte sin la llave</h4>
+  <p class="lens-note" style="margin-top:0">Vas a hacer lo que haría un atacante con la base de datos robada: intentar descifrar el blob con una llave cualquiera. El navegador ejecutará el intento <b>de verdad</b>.</p>
+  <div class="lens-actions"><button class="lens-btn solid" id="btn-try-dec"><i class="fa-solid fa-skull"></i> Intentar descifrado por fuerza</button></div>
+  <div class="lens-err" id="try-dec-out"></div>`;
+}
+async function tryDecrypt(){
+  const out=$("#try-dec-out"); out.style.display="block"; out.textContent="⏳ importando llave falsa y llamando a crypto.subtle.decrypt()…";
+  try{
+    const fake=await crypto.subtle.importKey("raw",crypto.getRandomValues(new Uint8Array(32)),{name:"AES-GCM"},false,["decrypt"]);
+    await crypto.subtle.decrypt({name:"AES-GCM",iv:K.iv},fake,K.cipher);
+    out.textContent="(esto no debería pasar)";
+  }catch(e){
+    out.innerHTML=`✗ ${e.name}: el descifrado falló.\n\nAES-GCM no devuelve "basura descifrada": la verificación del tag\nrechaza la operación completa. Con 2^256 llaves posibles, este error\nes todo lo que un atacante verá, por siempre.`;
+  }
+}
+function panelChainForge(){
+  const l=CHAIN.logs[3];
+  return `<h4 class="lens-title"><i class="fa-solid fa-link"></i> Cómo se forja un eslabón</h4>
+  <div class="gcm-math">
+    entrada = id <span class="hl">|</span> timestamp <span class="hl">|</span> acción <span class="hl">|</span> usuario <span class="hl">|</span> detalle <span class="hl">|</span> <span class="hl">hash_anterior</span><br>
+    ${T("SHA-256")}(entrada) → <span class="ok">hash_actual</span>
+  </div>
+  <div class="hexrow" style="margin-top:.7rem"><span class="k">hash del eslabón #${l.id-1}</span>${truncHex(CHAIN.logs[2].hash,30)}</div>
+  <div class="hexrow"><span class="k">↳ entra en el eslabón #${l.id}</span><span class="v">"${l.id}|${l.ts.slice(0,19)}|${l.action}|${l.user}|…|${CHAIN.logs[2].hash.slice(0,10)}…"</span></div>
+  <div class="hexrow"><span class="k">hash del eslabón #${l.id}</span>${truncHex(l.hash,30)}</div>
+  <p class="lens-note">Cada hash <b>contiene</b> al anterior: los eslabones quedan soldados. Alterar el pasado exigiría re-forjar todos los eslabones posteriores. Recuerda esta cadena — será la heroína del capítulo 5.</p>`;
+}
+function panelLagrange(){
+  const yb=[1,2,3].map(x=>{const p=K.shares[x].split("-");return Uint8Array.from(atob(p.slice(4).join("-")),c=>c.charCodeAt(0))[0];});
+  return `<h4 class="lens-title"><i class="fa-solid fa-chart-line"></i> El secreto es el intercepto — juega con los fragmentos</h4>
+  <p class="lens-note" style="margin-top:0">Primer byte real de la llave privada: es el valor de una recta secreta en <b>x=0</b>. Los shares son los puntos de esa recta en x=1, 2, 3 (aritmética en ${T("GF(256)")}). Activa fragmentos y observa:</p>
+  <svg id="lagrange-svg" viewBox="0 0 560 300"></svg>
+  <div class="lg-toggles">${[1,2,3].map(i=>`<button class="lg-tg" data-s="${i}">◆ SHARE ${i} · y=${yb[i-1]}</button>`).join("")}</div>
+  <div class="lg-verdict no" id="lg-verdict">0 fragmentos: infinitas rectas posibles → el secreto puede ser CUALQUIER byte.</div>`;
+}
+const LG={sel:new Set(),raf:null};
+function lagrangeInit(){
+  LG.sel.clear(); drawLagrange();
+  $$(".lg-tg").forEach(b=>b.onclick=()=>{const s=+b.dataset.s;
+    LG.sel.has(s)?LG.sel.delete(s):LG.sel.add(s); b.classList.toggle("on",LG.sel.has(s)); drawLagrange();});
+}
+function drawLagrange(){
+  cancelAnimationFrame(LG.raf);
+  const svg=$("#lagrange-svg"); if(!svg) return;
+  const S=K.privPkcs8[0];
+  const ys=[1,2,3].map(x=>{const p=K.shares[x].split("-");return Uint8Array.from(atob(p.slice(4).join("-")),c=>c.charCodeAt(0))[0];});
+  const X=x=>60+x*140, Y=y=>270-(y/255)*240;
+  const axes=`<line x1="60" y1="30" x2="60" y2="270" stroke="#334155"/><line x1="40" y1="270" x2="540" y2="270" stroke="#334155"/>
+    <text x="52" y="26" font-size="11" fill="#64748b" text-anchor="end">255</text><text x="52" y="274" font-size="11" fill="#64748b" text-anchor="end">0</text>
+    ${[0,1,2,3].map(x=>`<text x="${X(x)}" y="290" font-size="12" fill="#64748b" text-anchor="middle">x=${x}${x===0?" (secreto)":""}</text>`).join("")}
+    <line x1="${X(0)}" y1="30" x2="${X(0)}" y2="270" stroke="rgba(167,139,250,.25)" stroke-dasharray="4 4"/>`;
+  const pts=[1,2,3].map(x=>`<g opacity="${LG.sel.has(x)?1:.22}"><circle cx="${X(x)}" cy="${Y(ys[x-1])}" r="7" fill="#a78bfa"/>
+    <text x="${X(x)}" y="${Y(ys[x-1])-13}" font-size="11" fill="#c4b5fd" text-anchor="middle" font-weight="700">S${x}=${ys[x-1]}</text></g>`).join("");
+  const v=$("#lg-verdict");
+  if(LG.sel.size>=2){
+    const [a,bx]=[...LG.sel];
+    svg.innerHTML=axes+`<line x1="${X(0)}" y1="${Y(S)}" x2="${X(3)}" y2="${Y(gfLineAt(a,ys[a-1],bx,ys[bx-1],3))}" stroke="#10b981" stroke-width="3" opacity="0"/>`+pts+
+      `<line id="lg-line" x1="${X(a)}" y1="${Y(ys[a-1])}" x2="${X(bx)}" y2="${Y(ys[bx-1])}" stroke="#10b981" stroke-width="3"/>
+       <circle cx="${X(0)}" cy="${Y(S)}" r="9" fill="none" stroke="#10b981" stroke-width="3" filter="url(#f-glow)"/>
+       <text x="${X(0)+14}" y="${Y(S)+4}" font-size="13" fill="#6ee7b7" font-weight="800">SECRETO = ${S} ✓</text>`;
+    // extender la recta visual hasta x=0 y x=3 (recta euclidiana ilustrativa entre los 2 puntos elegidos)
+    const y0=lineAt(a,ys[a-1],bx,ys[bx-1],0), y3=lineAt(a,ys[a-1],bx,ys[bx-1],3);
+    $("#lg-line").setAttribute("x1",X(0)); $("#lg-line").setAttribute("y1",Y(y0));
+    $("#lg-line").setAttribute("x2",X(3)); $("#lg-line").setAttribute("y2",Y(y3));
+    v.className="lg-verdict yes"; v.innerHTML=`2 puntos determinan la recta → intercepto reconstruido por Lagrange: <b>${S}</b> (byte real de la llave). Con los ${K.privPkcs8.length} bytes se repite lo mismo.`;
+  } else if(LG.sel.size===1){
+    const a=[...LG.sel][0]; let t=0;
+    v.className="lg-verdict no"; v.innerHTML=`1 fragmento: por un punto pasan <b>infinitas rectas</b>. Cada una implica un secreto distinto — 0 bits de información.`;
+    const anim=()=>{ t+=REDUCED?0:0.02;
+      const slopes=[-3,-1.5,-.6,0,.6,1.5,3].map((m,i)=>{const mm=m*Math.cos(t+i);
+        const y0=ys[a-1]-mm*a*60, y3=ys[a-1]+mm*(3-a)*60;
+        return `<line x1="${X(0)}" y1="${Math.max(20,Math.min(280,Y(y0)))}" x2="${X(3)}" y2="${Math.max(20,Math.min(280,Y(y3)))}" stroke="rgba(239,68,68,.4)" stroke-width="1.6"/>`;}).join("");
+      svg.innerHTML=axes+slopes+pts;
+      if(LG.sel.size===1) LG.raf=requestAnimationFrame(anim); };
+    anim(); return;
+  } else { svg.innerHTML=axes+pts; v.className="lg-verdict no";
+    v.textContent="0 fragmentos: infinitas rectas posibles → el secreto puede ser CUALQUIER byte."; }
+}
+const lineAt=(x1,y1,x2,y2,x)=> y1+(y2-y1)*(x-x1)/(x2-x1);
+const gfLineAt=lineAt;
+function panelCombos(){
+  return `<h4 class="lens-title"><i class="fa-solid fa-unlock"></i> ¿Qué combinaciones abren la bóveda?</h4>
+  <div class="gcm-math">
+  ${[["S1","—","—","✗ 0 bits de información"],["S1","S2","—","✓ reconstruye"],["S1","—","S3","✓ reconstruye"],["—","S2","S3","✓ reconstruye"],["S1","S2","S3","✓ reconstruye (sobra uno)"]]
+    .map(r=>`${r.slice(0,3).map(c=>c==="—"?`<span style="color:#374151">—</span>`:`<span class="hl">${c}</span>`).join(" + ")} → ${r[3].startsWith("✓")?`<span class="ok">${r[3]}</span>`:`<span style="color:#fca5a5">${r[3]}</span>`}`).join("<br>")}
+  </div>
+  <p class="lens-note">Umbral <b>k=2</b>: tolera la pérdida de un custodio (disponibilidad) y a la vez impide que uno solo actúe por su cuenta (confianza repartida). Un custodio corrupto tiene, matemáticamente, las manos vacías.</p>`;
+}
+function panelJWT(){
+  const h=btoa(JSON.stringify({alg:"HS256",typ:"JWT"})).replace(/=+$/,"");
+  const p=btoa(JSON.stringify({sub:"auditor",role:"auditor",exp:Math.floor(Date.now()/1e3)+1800})).replace(/=+$/,"");
+  return `<h4 class="lens-title"><i class="fa-solid fa-id-badge"></i> La credencial del auditor, decodificada</h4>
+  <div class="hexrow"><span class="k">token</span><span class="v" style="font-size:.72rem"><span style="color:#f87171">${h}</span>.<span style="color:#a78bfa">${p}</span>.<span style="color:#64748b">firma…</span></span></div>
+  <div class="gcm-math" style="margin-top:.7rem">header  → {"alg":"HS256","typ":"JWT"}<br>payload → {"sub":"auditor","role":"<span class="hl">auditor</span>","exp":…}<br>firma   → HMAC con el secreto del servidor</div>
+  <p class="lens-note">El ${T("JWT")} le abre la <b>puerta de la API</b> (RBAC), nada más: el servidor le entregará el ladrillo cifrado. Para leerlo hará falta algo que ningún token otorga — reconstruir la llave privada.</p>`;
+}
+function panelShares(){
+  return `<h4 class="lens-title"><i class="fa-solid fa-hand-holding"></i> Reúne el quórum: inserta 2 de 3 fragmentos</h4>
+  <div class="share-grid">${[1,2,3].map(i=>`<div class="share-card" data-s="${i}"><i class="fa-solid fa-gem"></i>
+    <div class="sid">SHARE ${i}</div><div class="shex">${K.shares[i].slice(0,46)}…</div></div>`).join("")}</div>
+  <div class="lg-verdict no" id="sh-verdict">0 / 2 fragmentos en memoria. El formato real es <b>SD-SHARE-v1-[id]-[base64]</b>, igual que los archivos .share del proyecto.</div>`;
+}
+const SH={sel:new Set()};
+function sharesInit(){
+  SH.sel.clear();
+  $$(".share-card").forEach(c=>c.onclick=()=>{
+    const s=+c.dataset.s;
+    if(SH.sel.has(s)){SH.sel.delete(s);c.classList.remove("loaded");}
+    else if(SH.sel.size<2){SH.sel.add(s);c.classList.add("loaded");}
+    $$(".share-card").forEach(x=>x.classList.toggle("disabled",SH.sel.size>=2&&!SH.sel.has(+x.dataset.s)));
+    const v=$("#sh-verdict"), ok=SH.sel.size>=2;
+    v.className="lg-verdict "+(ok?"yes":"no");
+    v.innerHTML=ok?`✓ Quórum alcanzado con SHARE ${[...SH.sel].join(" y SHARE ")}. Ya se puede interpolar.`:`${SH.sel.size} / 2 fragmentos en memoria.`;
+    $("#j-cta").disabled=!ok;
+  });
+}
+async function panelRebuild(){
+  const t0=performance.now();
+  const plain=await auditorDecrypt([...SH.sel.size?SH.sel:[1,2]]);
+  const ms=(performance.now()-t0).toFixed(1);
+  K.decrypted=plain;
+  return `<h4 class="lens-title"><i class="fa-solid fa-wand-magic-sparkles"></i> Interpolación de Lagrange, byte a byte</h4>
+  <div class="gcm-math">S = y<sub>A</sub>·ℓ<sub>A</sub>(0) ⊕ y<sub>B</sub>·ℓ<sub>B</sub>(0) &nbsp;&nbsp; con ℓ<sub>A</sub>(0)=x<sub>B</sub>/(x<sub>B</sub>⊕x<sub>A</sub>) en ${T("GF(256)")}<br>
+  bytes reconstruidos: <span class="hl" id="rb-count">0</span> / ${K.privPkcs8.length}</div>
+  <div class="hexrow" style="margin-top:.7rem"><span class="k">llave privada reconstruida</span>${truncHex("0x"+hex(K.privPkcs8.slice(0,24))+"…",34)}</div>
+  <div class="hexrow"><span class="k">¿idéntica a la original?</span><span class="v" style="color:var(--success)">${K.rebuiltOk?"✓ sí — verificado byte a byte":"✗"} &nbsp;<i style="color:var(--text-dark)">(${ms} ms, en tu RAM)</i></span></div>
+  <p class="lens-note">La llave privada completa <b>vuelve a existir</b> — pero solo dentro de un marco punteado etiquetado RAM. Nunca tocó la red ni el disco del servidor.</p>`;
+}
+function animateRebuild(){ const el=$("#rb-count"); if(!el)return; let n=0; const total=K.privPkcs8.length;
+  const iv=setInterval(()=>{ n=Math.min(total,n+Math.ceil(total/40)); el.textContent=n; if(n>=total)clearInterval(iv); },REDUCED?1:45); }
+function panelPlainResult(){
+  let fileResult = "";
+  if (K.attachedFile !== "none" && K.decryptedFile) {
+    fileResult = `<div style="margin-top: 1rem; padding: 0.8rem 1rem; background: rgba(16,185,129,0.06); border: 1px solid rgba(16,185,129,0.3); border-radius: 12px; display: flex; align-items: center; justify-content: space-between;">
+      <div style="display: flex; align-items: center; gap: 0.6rem;">
+        <i class="fa-solid ${K.attachedFile.endsWith('.pdf') ? 'fa-file-pdf text-red-400' : 'fa-file-image text-blue-400'} text-xl"></i>
+        <div>
+          <span style="display: block; font-size: 0.85rem; font-weight: 700; color: var(--text-main);">${K.attachedFile}</span>
+          <span style="display: block; font-size: 0.72rem; color: var(--text-muted); font-family: var(--font-mono);">${K.decryptedFile.slice(0, 52)}...</span>
+        </div>
+      </div>
+      <button class="lens-btn" onclick="alert('Descargando archivo adjunto descifrado directamente de la memoria RAM del navegador...')"><i class="fa-solid fa-download"></i> Descargar</button>
+    </div>`;
+  }
+  return `<h4 class="lens-title"><i class="fa-solid fa-envelope-open-text"></i> El mensaje, legible por primera vez desde que salió</h4>
+  <div style="background:#f8fafc;color:#111827;border-radius:12px;padding:1rem 1.2rem;font-size:1.05rem;line-height:1.5">${esc(K.decrypted||K.msg)}</div>
+  ${fileResult}
+  <div class="gcm-math" style="margin-top:.8rem">verificación del ${T("AES-GCM","tag GCM")}: <span class="ok">✓ sello intacto — nadie tocó el ciphertext</span><br>
+  descifrado RSA-OAEP: <span class="ok">✓</span> &nbsp; descifrado AES-GCM: <span class="ok">✓</span> &nbsp; todo en el cliente: <span class="ok">✓</span></div>
+  <p class="lens-note">Recorrido del texto plano y adjunto: navegador del informante → <b>(nada)</b> → navegador del auditor. Dos lugares en todo el universo. El servidor participó en cada paso sin ver jamás una letra.</p>`;
+}
+function panelLogEditor(){
+  return `<h4 class="lens-title"><i class="fa-solid fa-user-secret"></i> Eres el atacante: altera un registro histórico</h4>
+  <p class="lens-note" style="margin-top:0">Tienes el archivo <b>safedrop.db</b> abierto. Elige un eslabón de la tabla <b>audit_logs</b> y reescribe su historia (esto replica lo que hace <b>POST /api/audit/simulate-tampering</b>):</p>
+  <div class="log-list" id="tam-list">${CHAIN.logs.map((l,i)=>`<div class="log-item" data-i="${i}">
+    <span class="lid">#${l.id}</span><span class="lact">${l.action}</span><span class="ldet">${esc(l.details)}</span><span class="lhash">${l.hash.slice(0,8)}…</span></div>`).join("")}</div>
+  <div id="tam-edit" style="display:none">
+    <textarea class="j-input-msg" id="tam-text" style="min-height:56px"></textarea>
+    <div class="lens-actions"><button class="lens-btn solid" id="tam-go" style="border-color:var(--danger);background:var(--danger)"><i class="fa-solid fa-pen"></i> Sobrescribir en la DB (sin recalcular el hash)</button></div>
+  </div>
+  <div class="lg-verdict no" id="tam-verdict" style="display:none"></div>`;
+}
+function tamperInit(){
+  let sel=-1;
+  $$("#tam-list .log-item").forEach(it=>it.onclick=()=>{
+    sel=+it.dataset.i; $$("#tam-list .log-item").forEach(x=>x.classList.toggle("sel",+x.dataset.i===sel));
+    $("#tam-edit").style.display="block"; $("#tam-text").value=CHAIN.logs[sel].details;
+  });
+  $("#tam-go").onclick=async()=>{
+    if(sel<0)return;
+    CHAIN.logs[sel].details=$("#tam-text").value||CHAIN.logs[sel].details+" [ALTERADO]";
+    CHAIN.corruptIdx=sel; CHAIN.verifyCache=null;
+    const v=$("#tam-verdict"); v.style.display="block"; v.className="lg-verdict yes";
+    v.innerHTML=`Registro #${sel+1} sobrescrito. El campo <b>details</b> cambió… pero el <b>hash almacenado sigue siendo el antiguo</b>. Continúa para ver la matemática delatarlo.`;
+    $$("#tam-list .log-item")[sel].classList.add("corrupt");
+    $("#j-cta").disabled=false;
+    renderWorld(stateAt(cur));
+  };
+}
+async function ensureTampered(){ if(CHAIN.corruptIdx>=0) return;
+  CHAIN.corruptIdx=2; CHAIN.logs[2].details+=" — [ALTERADO POR EL ATACANTE]"; CHAIN.verifyCache=null; }
+async function panelHashCompare(){
+  await ensureTampered();
+  const l=CHAIN.logs[CHAIN.corruptIdx];
+  const fresh=await recomputeHash(l);
+  const paint=(a,b)=>[...a].map((c,i)=>`<span class="${c===b[i]?"good":"bad"}">${c}</span>`).join("");
+  return `<h4 class="lens-title"><i class="fa-solid fa-magnifying-glass"></i> El dato miente; el hash no</h4>
+  <p class="lens-note" style="margin-top:0">Registro #${l.id}: el atacante cambió el contenido pero no puede cambiar la matemática. Comparación carácter a carácter:</p>
+  <div class="hash-cmp">
+    <div class="col"><h5>Hash almacenado (forjado con el dato original)</h5><div class="hash-chars">${paint(l.hash,fresh)}</div></div>
+    <div class="col"><h5>Hash recalculado ahora (con el dato alterado)</h5><div class="hash-chars">${paint(fresh,l.hash)}</div></div>
+  </div>
+  <p class="lens-note">Efecto avalancha de ${T("SHA-256")}: un cambio mínimo en la entrada altera ~50% de los bits. Los dos valores no se parecen en nada — y esa divergencia es la firma del crimen.</p>`;
+}
+function panelRewriteAll(){
+  return `<h4 class="lens-title"><i class="fa-solid fa-circle-question"></i> "¿Y si el atacante recalcula TODA la cadena?"</h4>
+  <div class="gcm-math">para ocultar el eslabón #k debe re-forjar: hash(k), hash(k+1), … hash(n)<br>
+  → reescritura <span class="hl">total y consistente</span> de la tabla audit_logs</div>
+  <p class="lens-note">Es posible en teoría — y por eso este diseño se defiende en capas: la verificación compara la cadena completa contra su propia consistencia y contra los respaldos previos; cualquier re-forja masiva diverge del último backup íntegro. En producción, el README propone además <b>anclar la cabeza de la cadena fuera del sistema</b> (multi-custodio / KMS externo), volviendo la reescritura detectable siempre. Ser honestos con este límite es parte del rigor del proyecto.</p>`;
+}
+function panelDefenses(){
+  const d=[["fa-lock","TLS 1.3 en tránsito","nadie escucha la red"],["fa-user-shield","Argon2id en credenciales","fuerza bruta inviable"],
+    ["fa-cube","Cifrado híbrido en reposo","la DB es ilegible"],["fa-id-badge","RBAC con JWT","cada rol, su puerta"],
+    ["fa-gem","Cold storage + Shamir 2-de-3","la llave maestra no existe entera en ningún lado"]];
+  return `<h4 class="lens-title"><i class="fa-solid fa-shield-halved"></i> Defensa en profundidad: las 5 murallas</h4>
+  <div class="log-list" style="max-height:none">${d.map((x,i)=>`<div class="log-item okv defense-ring" style="opacity:0" data-d="${i}">
+    <i class="fa-solid ${x[0]}" style="color:var(--success);width:22px;text-align:center"></i>
+    <span class="lact" style="min-width:220px">${x[1]}</span><span class="ldet">${x[2]}</span></div>`).join("")}</div>
+  <p class="lens-note">Ninguna muralla es perfecta; juntas, el ataque exitoso exige romperlas <b>todas a la vez</b>. Eso es SafeDrop Local: la protección del denunciante deja de ser una promesa corporativa y se vuelve una restricción matemática.</p>`;
+}
+
+/* ---------- 8. LOS BEATS (guion completo, 5 capítulos) ---------- */
+function defineBeats(){
+  const B=[];
+  const add=o=>B.push(o);
+
+  /* ===== CAPÍTULO 1 — El Nacimiento del Secreto ===== */
+  add({ch:1,n:1,title:"María tiene un secreto",zoom:"world",state:{accent:"--ch1"},
+    text:`Este es el mundo de SafeDrop. A la izquierda, <b>María</b>, una empleada que detectó un fraude. Al centro, un servidor que promete no leer nada. A la derecha, el único navegador autorizado a leer. Arriba, tres custodios. Abajo, más tarde, un atacante.<br><br>María va a reportar el fraude <b>sin que nadie — ni siquiera el sistema — pueda saber quién es ni qué dijo</b>. Sigamos a su mensaje.`,
+    note:"Usa ←/→, la barra inferior o el botón Continuar. El minimapa (abajo a la derecha) siempre te trae de vuelta a esta vista.",
+    enter(){ if(REDUCED)return; gsap.fromTo("#w-informante",{opacity:.2},{opacity:1,duration:1});
+      gsap.fromTo("#j-chapterchip",{y:-8,opacity:0},{y:0,opacity:1,duration:.5}); }});
+  add({ch:1,n:2,title:"Todo empieza — y casi todo termina — aquí dentro",zoom:"informante",state:{msg:true},
+    text:`Hacemos zoom al navegador de María. Escribe su denuncia en el formulario de <b>index.html</b>. Fíjate en el candado: el contexto es HTTPS, requisito para que exista <b>window.crypto.subtle</b>, la API criptográfica nativa.<br><br><b>Edita el mensaje si quieres</b> — toda la historia usará TU texto, cifrado con criptografía real:<textarea class="j-input-msg" id="msg-input">${esc(K.msg)}</textarea>
+    <div style="margin-top:.7rem">
+      <label style="display:block; font-size:.78rem; font-weight:700; color:var(--text-muted); margin-bottom:.2rem"><i class="fa-solid fa-paperclip" style="color:var(--accent)"></i> Adjuntar Evidencia (PDF/Foto):</label>
+      <select class="j-input-msg" id="file-input" style="min-height:38px; margin-top:2px; padding:.3rem .5rem; font-size:.9rem">
+        <option value="evidencia.pdf" ${K.attachedFile==="evidencia.pdf"?"selected":""}>evidencia.pdf (124 KB)</option>
+        <option value="contrato_corrupto.jpg" ${K.attachedFile==="contrato_corrupto.jpg"?"selected":""}>contrato_corrupto.jpg (2.1 MB)</option>
+        <option value="none" ${K.attachedFile==="none"?"selected":""}>— Sin archivo adjunto —</option>
+      </select>
+    </div>`,
+    note:"Nada ha salido del navegador todavía. El texto plano de la tarjeta blanca solo existirá en dos pantallas en todo el universo.",
+    eng:()=>({file:"frontend/index.html · contexto seguro",body:`<span class="cm">// Web Crypto exige HTTPS:</span>\n<span class="kw">if</span> (!window.isSecureContext) {\n  <span class="cm">// crypto.subtle === undefined</span>\n}\n<span class="cm">// por eso run.py genera certs X.509\n// autofirmados (backend/ssl_gen.py)</span>`}),
+    enter(){
+      const t=$("#msg-input"), f=$("#file-input");
+      if(!t) return; let deb;
+      const update=()=> {
+        clearTimeout(deb);
+        deb=setTimeout(async()=>{
+          K.msg=t.value||" ";
+          K.attachedFile=f?f.value:"none";
+          await runPipeline();
+          renderWorld(stateAt(cur));
+        },350);
+      };
+      t.addEventListener("input",update);
+      if(f) f.addEventListener("change",update);
+    }});
+  add({ch:1,n:3,title:"Nace una llave que nadie más verá",zoom:"informante",state:{aesKey:true,ivChip:true},lens:true,lensName:"Material criptográfico",
+    text:`El navegador tira los dados cuánticos: <b>32 bytes</b> del generador criptográficamente seguro se convierten en una llave ${T("AES-GCM")} de un solo uso, junto a un ${T("IV")} de 12 bytes.<br><br>Los valores del panel central son <b>reales</b>: tu navegador acaba de generarlos.`,
+    eng:()=>({file:"frontend/js/crypto_client.js",body:`<span class="kw">const</span> aesKey = <span class="kw">await</span> crypto.subtle.generateKey(\n  { name: <span class="st">"AES-GCM"</span>, length: <span class="st">256</span> },\n  <span class="kw">true</span>, [<span class="st">"encrypt"</span>]\n);\n<span class="kw">const</span> iv = crypto.getRandomValues(<span class="kw">new</span> Uint8Array(<span class="st">12</span>));`}),
+    enter(){ openLens(panelKeyMaterial());
+      if(!REDUCED){gsap.fromTo("#w-aeskey",{scale:.3,rotation:-180,transformOrigin:"center"},{scale:1,rotation:0,duration:.9,ease:"back.out(1.6)"});
+      gsap.fromTo("#w-iv",{x:30,opacity:0},{x:0,opacity:1,duration:.6,delay:.4});} }});
+  add({ch:1,n:4,title:"El mensaje se disuelve en ruido — con sello",zoom:"informante",state:{encrypted:true},lens:true,lensName:"Bloques AES-GCM",dur:9000,
+    text:`Zoom máximo: dentro del cifrado. ${T("AES-GCM")} genera un <b>keystream</b> y lo mezcla con tu mensaje vía XOR, carácter por carácter. Al final estampa un <b>tag de 16 bytes</b>: un sello de lacre matemático.<br><br>Si mañana alguien altera un solo bit del ciphertext, el sello no coincidirá y el descifrado se negará por completo.`,
+    eng:()=>({file:"payload real (P ⊕ C = keystream)",body:`ciphertext[0..8] = <span class="st">${hex(K.cipher.slice(0,9))}</span>\ntag GCM        = <span class="st">${hex(K.tag)}</span>\n<span class="cm">// el tag autentica ciphertext + IV:\n// integridad dentro del propio cifrado</span>`}),
+    enter(){ openLens(panelGCM()); animateGCM();
+      if(!REDUCED) gsap.fromTo("#w-brick-inf",{opacity:0,scale:.7,transformOrigin:"245px 400px"},{opacity:1,scale:1,duration:.7,delay:1.2}); }});
+  add({ch:1,n:5,title:"La llave entra en una caja que María no puede reabrir",zoom:"informante",state:{wrapped:true},lens:true,lensName:"Envoltura RSA-OAEP",
+    text:`Queda un problema: la llave AES también viajará. Se protege envolviéndola con ${T("RSA-OAEP")} usando la <b>llave pública</b> de la organización (endpoint <b>/api/crypto/public-key</b>).<br><br>Es un buzón de un solo sentido: cualquiera puede depositar, pero ni siquiera María puede volver a abrirlo. Solo la llave privada — que pronto veremos romperse en tres — podrá.`,
+    eng:()=>({file:"frontend/js/crypto_client.js",body:`<span class="kw">const</span> wrapped = <span class="kw">await</span> crypto.subtle.encrypt(\n  { name: <span class="st">"RSA-OAEP"</span> },   <span class="cm">// MGF1 + SHA-256</span>\n  orgPublicKey,\n  rawAesKey            <span class="cm">// 32 bytes</span>\n);\n<span class="cm">// resultado: ${K.wrapped.length} bytes</span>`}),
+    enter(){ openLens(panelOAEP());
+      if(!REDUCED) gsap.fromTo("#w-wrap",{scale:.85,opacity:0,transformOrigin:"243px 240px"},{scale:1,opacity:1,duration:.7,ease:"back.out(1.5)"}); }});
+  add({ch:1,n:6,title:"El viaje: un túnel con doble pared",zoom:"tls",state:{packet:1,spySees:true},dur:8000,
+    text:`El paquete <b>{ciphertext, IV, llave envuelta}</b> parte hacia <b>POST /api/reports/submit</b> por el túnel ${T("TLS")}.<br><br>Observa al espía con su lupa en medio de la red: si rompiera la pared exterior (TLS), dentro encontraría… más cifrado. La denuncia viaja con <b>doble pared</b>, y la interior no la abre ni el propio servidor de destino.`,
+    note:"Verificable en el proyecto real: F12 → pestaña Red → el body del POST solo contiene base64 cifrado. Ni una letra en claro.",
+    eng:()=>({file:"POST /api/reports/submit — body real",body:`{\n  <span class="st">"report_text_encrypted"</span>: <span class="st">"${K.payload.report_text_encrypted.slice(0,26)}…"</span>,\n  <span class="st">"report_iv"</span>: <span class="st">"${K.payload.report_iv}"</span>,\n  <span class="st">"encrypted_aes_key"</span>: <span class="st">"${K.payload.encrypted_aes_key.slice(0,26)}…"</span>\n}\n<span class="cm">// sin IP, sin user-agent, sin cookies</span>`}),
+    enter(){ const pk=$("#w-packet"); gsap.set(pk,{opacity:1});
+      const p=$("#w-tls-path"), L=p.getTotalLength(), o={t:0};
+      gsap.to(o,{t:1,duration:REDUCED?.2:2.6,ease:"power1.inOut",repeat:REDUCED?0:2,onUpdate(){const pt=p.getPointAtLength(L*o.t);gsap.set(pk,{x:pt.x,y:pt.y-16});}});
+      gsap.to("#w-tls-path",{strokeDashoffset:-200,duration:3,repeat:-1,ease:"none"}); }});
+  add({ch:1,n:7,title:"Entrega ciega completada",zoom:"world",state:{packet:0,dbBricks:1,chain:3},
+    text:`El paquete cae en <b>safedrop.db</b> como un ladrillo opaco, y la bitácora suelda un nuevo eslabón: <b>REPORT_SUBMITTED</b>.<br><br>María cierra su navegador. Su llave AES se esfuma con la pestaña; su identidad nunca existió en el sistema. Fin del primer acto — ahora entremos al servidor a comprobar que de verdad es ciego.`,
+    cta:"Entrar al servidor →",
+    enter(){ if(REDUCED)return;
+      gsap.fromTo("#w-db-bricks use",{y:-60,opacity:0},{y:0,opacity:1,duration:.8,ease:"bounce.out"});
+      gsap.fromTo("#w-chain-links g:last-child",{scale:.5,opacity:0,transformOrigin:"center"},{scale:1,opacity:1,duration:.5,delay:.6}); }});
+
+  /* ===== CAPÍTULO 2 — El Guardián Ciego ===== */
+  add({ch:2,n:1,title:"Lo que el servidor realmente guarda",zoom:"server",state:{accent:"--ch2"},lens:true,lensName:"Fila SQLite",
+    text:`Dentro de la sala de máquinas: FastAPI recibió el paquete y SQLAlchemy lo archivó tal cual. El panel muestra la fila <b>exacta</b> de la tabla, con el base64 real de tu mensaje.<br><br>Nota el ojo tachado sobre el rack: es una decisión de arquitectura, no una política. Esto es ${T("Zero-Knowledge","arquitectura de conocimiento cero")}.`,
+    eng:()=>({file:"backend/main.py · submit_report()",body:`<span class="kw">new_report</span> = Report(\n  report_text_encrypted=payload.report_text_encrypted,\n  report_iv=payload.report_iv,\n  encrypted_aes_key=payload.encrypted_aes_key\n)\n<span class="cm"># el backend guarda strings base64;\n# jamás importa una llave, jamás descifra</span>`}),
+    enter(){ openLens(panelSQLiteRow()); [0,1,2].forEach(i=>gsap.to(`#w-led-${i}`,{fill:"#10b981",duration:.2,delay:.3*i,yoyo:true,repeat:3})); }});
+  add({ch:2,n:2,title:"Ponte el sombrero negro: intenta leerlo",zoom:"server",lens:true,lensName:"Prueba de fuerza",interactive:true,
+    text:`No nos creas: <b>compruébalo</b>. Imagina que robaste la base de datos completa. En el panel hay un botón que intenta descifrar el blob con una llave aleatoria, usando la API criptográfica de verdad.<br><br>Ejecútalo y lee el error con calma: es el mismo muro contra el que chocaría cualquier administrador curioso, técnico de soporte o atacante.`,
+    enter(){ openLens(panelTryDecrypt()); $("#btn-try-dec").onclick=tryDecrypt; }});
+  add({ch:2,n:3,title:"Mientras tanto, la bitácora suelda eslabones",zoom:"chain",state:{chain:4},lens:true,lensName:"Forja de un eslabón",
+    text:`Cada acción del sistema — un login, un reporte, una consulta — se registra en la bitácora. Pero no como texto suelto: cada registro incluye el <b>hash del anterior</b> dentro de su propio hash ${T("SHA-256")}.<br><br>Los eslabones quedan soldados en orden. Guarda esta imagen: esta cadena será la heroína del capítulo final.`,
+    eng:()=>({file:"backend/database.py · compute_log_hash()",body:`data = <span class="st">f"{id}|{ts}|{action}|{user}|{details}|{prev_hash}"</span>\n<span class="kw">return</span> hashlib.sha256(data.encode()).hexdigest()\n<span class="cm"># prev_hash adentro ⇒ cadena soldada</span>`}),
+    enter(){ openLens(panelChainForge());
+      if(!REDUCED) gsap.fromTo(".chain-link",{opacity:0,y:14},{opacity:1,y:0,duration:.4,stagger:.12}); }});
+  add({ch:2,n:4,title:"Los datos duermen cifrados. ¿Quién puede despertarlos?",zoom:"world",
+    text:`Vista completa: el reporte reposa como ladrillo ilegible, la cadena crece, el servidor sirve sin ver. La confidencialidad y la integridad están en pie.<br><br>Pero toda historia de cifrado esconde la misma pregunta: <b>¿dónde vive la llave que lo abre todo?</b> Para responderla hay que rebobinar al día cero.`,
+    cta:"Rebobinar al Día 0 →"});
+
+  /* ===== CAPÍTULO 3 — La Llave Rota en Tres ===== */
+  add({ch:3,n:1,title:"Día 0: nace la llave más peligrosa del sistema",zoom:"custodios",state:{accent:"--ch3",privkey:true},
+    text:`Rebobinamos al arranque: <b>crypto_utils.py</b> genera el par RSA-2048 de la organización. La <b>pública</b> (verde) se queda en el servidor: solo sirve para cerrar buzones.<br><br>La <b>privada</b> (roja, parpadeando) abre TODOS los reportes, pasados y futuros. Dejarla en el servidor recrearía exactamente el problema que vinimos a eliminar: un admin todopoderoso.`,
+    enter(){ if(!REDUCED) gsap.to("#w-privkey",{opacity:.35,duration:.5,yoyo:true,repeat:5}); }});
+  add({ch:3,n:2,title:"La matemática del reparto: juega con la recta",zoom:"custodios",lens:true,lensName:"Gráfica de Lagrange",interactive:true,
+    text:`${T("Shamir","Shamir's Secret Sharing")} esconde cada byte de la llave como el <b>intercepto de una recta secreta</b> en ${T("GF(256)")}. Los 3 fragmentos son puntos de esa recta.<br><br><b>Activa fragmentos en el panel</b>: con uno solo, infinitas rectas — cero información, no "casi cero". Con dos, la recta queda determinada y el secreto aparece. Los números que ves son bytes reales de la llave privada de esta sesión.`,
+    eng:()=>({file:"backend/crypto_utils.py · gf256_mul()",body:`<span class="cm"># polinomio irreducible 0x11d — idéntico aquí en JS</span>\n<span class="kw">def</span> gf256_mul(a, b):\n    p = 0\n    <span class="kw">for</span> _ <span class="kw">in</span> range(8):\n        <span class="kw">if</span> b & 1: p ^= a\n        carry = a & 0x80\n        a <<= 1\n        <span class="kw">if</span> carry: a ^= 0x11d\n        b >>= 1\n    <span class="kw">return</span> p & 0xff`}),
+    enter(){ openLens(panelLagrange()); lagrangeInit(); }});
+  add({ch:3,n:3,title:"Tres gemas, tres custodios — y una trituradora",zoom:"custodios",state:{privShred:true},dur:8000,
+    text:`Cada byte se reparte y nacen tres archivos <b>SD-SHARE-v1-*</b> que vuelan a custodios independientes: un USB, una caja fuerte, un tercero de confianza.<br><br>Y entonces, el gesto más importante del diseño: <b>la llave privada original se destruye</b>. A partir de este segundo, la llave maestra no existe entera en ningún lugar del planeta.`,
+    enter(){ if(REDUCED){renderWorld(stateAt(cur));return;}
+      gsap.fromTo("#w-privkey",{opacity:1},{opacity:0,scale:.2,rotation:25,transformOrigin:"960px 120px",duration:1.4,ease:"power2.in",delay:.8});
+      [1,2,3].forEach(i=>gsap.fromTo(`#w-share-${i}`,{y:60,opacity:0},{y:0,opacity:1,duration:.8,delay:.25*i,ease:"back.out(1.4)"})); }});
+  add({ch:3,n:4,title:"¿Qué combinaciones abren la bóveda?",zoom:"custodios",lens:true,lensName:"Umbral 2-de-3",
+    text:`El umbral k=2 logra dos cosas opuestas a la vez: <b>disponibilidad</b> (si un custodio pierde su fragmento, los otros dos bastan) y <b>desconfianza saludable</b> (ningún custodio puede leer denuncias por su cuenta).<br><br>Un custodio corrupto, sobornado o hackeado tiene, matemáticamente, las manos vacías.`,
+    enter(){ openLens(panelCombos()); }});
+  add({ch:3,n:5,title:"El mapa, ahora con satélites",zoom:"world",
+    text:`Volvemos al presente con el mapa completo: los tres fragmentos orbitan el sistema como satélites, la llave maestra no existe, y los reportes duermen cifrados.<br><br>Es hora de que alguien legítimo los lea. Entra en escena el auditor — y su ritual.`,
+    cta:"Seguir al auditor →"});
+
+  /* ===== CAPÍTULO 4 — El Ritual del Auditor ===== */
+  add({ch:4,n:1,title:"Primero, la puerta: el JWT",zoom:"auditor",state:{accent:"--ch4",brickAud:true},lens:true,lensName:"Credencial JWT",
+    text:`El auditor inicia sesión (contraseña protegida con ${T("Argon2id")}) y recibe un ${T("JWT")} con su rol. Con él pide <b>GET /api/reports/1</b>… y el servidor le entrega, obedientemente, <b>el ladrillo cifrado</b>.<br><br>Punto clave para la sustentación: la <b>autorización</b> (RBAC) y la <b>capacidad de descifrar</b> son poderes separados. El token abre puertas; no abre candados.`,
+    eng:()=>({file:"backend/main.py · get_report_detail()",body:`<span class="cm"># requiere rol auditor (JWT válido)…</span>\n<span class="kw">return</span> {\n  <span class="st">"report_text_encrypted"</span>: r.report_text_encrypted,\n  <span class="st">"report_iv"</span>: r.report_iv,\n  <span class="st">"encrypted_aes_key"</span>: r.encrypted_aes_key\n}\n<span class="cm"># …y aun así solo entrega blobs</span>`}),
+    enter(){ openLens(panelJWT()); }});
+  add({ch:4,n:2,title:"El ritual: reunir el quórum",zoom:"auditor",lens:true,lensName:"Carga de fragmentos",interactive:true,lockCta:true,
+    text:`El auditor saca su USB del cajón. <b>Haz clic en 2 de las 3 gemas del panel</b> para cargar los fragmentos en la memoria del navegador — igual que la zona de arrastre de <b>auditor.html</b> valida el encabezado <b>SD-SHARE-v1-</b>.<br><br>El botón Continuar se desbloqueará cuando el quórum esté completo.`,
+    enter(){ openLens(panelShares()); sharesInit(); $("#j-cta").disabled=true; }});
+  add({ch:4,n:3,title:"Lagrange resucita la llave — solo en RAM",zoom:"auditor",state:{privAud:true},lens:true,lensName:"Reconstrucción",dur:8500,
+    text:`Con dos puntos por byte, la interpolación de Lagrange corre en ${T("GF(256)")}: los ${K.privPkcs8.length} bytes de la llave privada se recomponen dentro de un marco punteado que dice <b>RAM</b>.<br><br>La comparación byte a byte del panel confirma que la llave reconstruida es idéntica a la original destruida en el capítulo 3. Todo esto acaba de ejecutarse de verdad en tu navegador.`,
+    async enter(){ openLens(await panelRebuild()); animateRebuild();
+      if(!REDUCED) gsap.fromTo("#w-privkey-aud",{opacity:0,scale:.4,transformOrigin:"1420px 407px"},{opacity:1,scale:1,duration:.8,delay:.5}); }});
+  add({ch:4,n:4,title:"Se abre la caja: cae la llave dorada",zoom:"auditor",state:{aesAud:true},
+    text:`La llave privada reconstruida abre la envoltura ${T("RSA-OAEP")} — la misma animación del capítulo 1, en reversa — y de la caja cae la <b>llave AES dorada</b> que María generó y que nadie más había visto desde entonces.<br><br>Queda el último paso: usarla contra el ladrillo.`,
+    enter(){ if(!REDUCED) gsap.fromTo("#w-aeskey-aud",{opacity:0,y:-24,rotation:-90,transformOrigin:"1429px 462px"},{opacity:1,y:0,rotation:0,duration:.9,ease:"back.out(1.5)"}); }});
+  add({ch:4,n:5,title:"El mensaje regresa — con el sello intacto",zoom:"auditor",state:{msgAud:true},lens:true,lensName:"Texto descifrado",
+    text:`AES-GCM descifra y, en el mismo acto, <b>verifica el tag</b>: nadie tocó el ciphertext en tránsito ni en reposo. El texto que lee el auditor es, garantizado por matemática, el que María escribió.<br><br>Cuenta los lugares donde existió el texto plano: dos navegadores. El servidor orquestó todo el viaje sin ver una sola letra.`,
+    eng:()=>({file:"descifrado 100% en el cliente",body:`<span class="kw">await</span> crypto.subtle.decrypt({name:<span class="st">"RSA-OAEP"</span>}, privKey, wrapped)\n<span class="kw">await</span> crypto.subtle.decrypt({name:<span class="st">"AES-GCM"</span>, iv}, aesKey, cipher)\n<span class="cm">// si el tag no cuadra: OperationError\n// (integridad y confidencialidad juntas)</span>`}),
+    enter(){ openLens(panelPlainResult()); }});
+  add({ch:4,n:6,title:"El ritual termina: las llaves se desvanecen",zoom:"auditor",state:{privAud:false,aesAud:false},
+    text:`Al cerrar el reporte, las referencias a las llaves se liberan y el recolector de basura hace el resto: la llave privada vuelve a <b>no existir</b>. Sin archivos temporales, sin caché, sin rastro.<br><br>El sistema regresa a su estado más seguro: secretos repartidos, datos cifrados, servidor ciego. Demasiado perfecto… hagamos que alguien intente romperlo.`,
+    cta:"Provocar el ataque →",
+    enter(){ if(!REDUCED){["#w-privkey-aud","#w-aeskey-aud"].forEach(s=>gsap.fromTo(s,{opacity:1},{opacity:0,scale:.3,duration:1,ease:"power2.in"}));} }});
+
+  /* ===== CAPÍTULO 5 — El Ataque y la Cadena ===== */
+  add({ch:5,n:1,title:"El peor escenario: el enemigo ya está adentro",zoom:"world",state:{accent:"--ch5",attacker:true,chain:6},
+    text:`Cambia la luz. Aparece el <b>admin malicioso</b>: no necesita romper TLS ni adivinar contraseñas — tiene acceso directo al archivo <b>safedrop.db</b>. Los reportes no le preocupan a él… le preocupa <b>la bitácora</b>, que registró algo que quiere borrar de la historia.<br><br>Este es el ataque que el botón "Simular Ataque DB" de <b>admin.html</b> reproduce. Aquí, el atacante serás tú.`,
+    enter(){ if(!REDUCED) gsap.fromTo("#w-attacker",{opacity:0,y:30},{opacity:1,y:0,duration:.9}); }});
+  add({ch:5,n:2,title:"Manos al teclado: reescribe la historia",zoom:"attacker",lens:true,lensName:"Editor del atacante",interactive:true,lockCta:true,
+    text:`Tienes la tabla <b>audit_logs</b> abierta con permisos de escritura. <b>Elige cualquier eslabón y reescribe su contenido</b> — cámbiale el usuario, el detalle, lo que quieras — y sobrescribe la fila.<br><br>Fíjate en el detalle criminal: puedes cambiar el dato, pero el hash almacenado junto a él fue forjado con el dato <b>original</b>.`,
+    eng:()=>({file:"backend/main.py · simulate_tampering()",body:`<span class="cm"># UPDATE directo, sin recalcular el hash:</span>\nlog.details = log.details + <span class="st">" [DATO ALTERADO]"</span>\ndb.commit()\n<span class="cm"># exactamente lo que haría un intruso\n# con acceso al archivo .db</span>`}),
+    enter(){ openLens(panelLogEditor()); tamperInit(); $("#j-cta").disabled=CHAIN.corruptIdx<0;
+      gsap.to("#w-attack-path",{opacity:1,duration:.6}); }});
+  add({ch:5,n:4,title:"El dato miente; el hash no",zoom:"chain",state:{attackLine:true},lens:true,lensName:"Comparación de hashes",dur:9000,
+    text:`Pantalla dividida: a la izquierda, el hash <b>almacenado</b> (forjado con el dato original); a la derecha, el hash <b>recalculado ahora</b> con el dato que alteraste.<br><br>El efecto avalancha de ${T("SHA-256")} hace que difieran en casi todos los caracteres. El atacante dejó el equivalente criptográfico de una huella dactilar gigante.`,
+    async enter(){ openLens(await panelHashCompare()); }});
+  add({ch:5,n:5,title:'"¿Y si recalcula toda la cadena?" — la pregunta inteligente',zoom:"chain",lens:true,lensName:"Límites y honestidad",
+    text:`Anticipémonos a la mejor pregunta del jurado. Re-forjar la cadena completa es teóricamente posible para quien controla la DB — por eso el diseño responde en capas: consistencia total verificada, respaldos íntegros para comparar, y la mejora propuesta en el README de <b>anclar la cabeza de la cadena fuera del sistema</b>.<br><br>Reconocer el límite exacto de cada defensa es lo que separa la ingeniería de seguridad del marketing.`,
+    enter(){ openLens(panelRewriteAll()); }});
+  add({ch:5,n:6,title:"Verificación: el pulso que recorre la cadena",zoom:"chain",state:{verify:"run"},dur:10000,
+    text:`El administrador legítimo pulsa <b>Verificar Integridad</b>. Un pulso recorre la cadena eslabón por eslabón, recalculando cada hash…<br><br>…hasta chocar con tu alteración: <b>⛓️‍💥 CADENA COMPROMETIDA</b>. El eslabón corrupto se marca en rojo y todos los posteriores quedan en cuarentena (ámbar): su pasado ya no es confiable. El incidente pasa al plan de respuesta: aislar la DB y restaurar el último respaldo íntegro.`,
+    eng:()=>({file:"backend/database.py · verify_audit_trail_integrity()",body:`<span class="kw">for</span> log <span class="kw">in</span> logs:\n    expected = compute_log_hash(..., prev_hash)\n    <span class="kw">if</span> expected != log.current_hash:\n        <span class="kw">return</span> <span class="st">False</span>, log.id  <span class="cm"># ⛓️‍💥</span>\n    prev_hash = log.current_hash`}),
+    async enter(){ await ensureTampered();
+      CHAIN.verifyCache = await verifyChain();
+      const myBeat = cur;
+      renderChain(6, null);
+      // pulso: pinta el veredicto real de cada eslabón, en orden, hasta chocar con el corrupto
+      for(let i=0;i<6;i++){
+        await new Promise(r=>setTimeout(r, REDUCED?40:650));
+        if(cur!==myBeat) return; // el usuario navegó a otro beat
+        const partial = CHAIN.verifyCache.map((v,j)=> j<=i ? v : null);
+        renderChain(6, partial);
+        if(!CHAIN.verifyCache[i].ok){
+          if(!REDUCED) gsap.fromTo("#w-chain",{x:-4},{x:4,duration:.06,repeat:9,yoyo:true,onComplete:()=>gsap.set("#w-chain",{x:0})});
+          await new Promise(r=>setTimeout(r, REDUCED?40:900));
+          break;
+        }
+      }
+      if(cur===myBeat) renderChain(6, CHAIN.verifyCache); }});
+  add({ch:5,n:7,title:"Las cinco murallas",zoom:"world",lens:true,lensName:"Defensa en profundidad",
+    text:`Cierre. Repasa lo que atravesamos: TLS que ciega la red, Argon2id que blinda las puertas, cifrado híbrido que vuelve ilegible el reposo, RBAC que separa poderes, y Shamir que evapora la llave maestra.<br><br>SafeDrop Local convierte la protección del denunciante en lo único que ninguna presión, soborno o descuido puede revocar: <b>una restricción matemática</b>.`,
+    cta:"Reiniciar la historia",
+    enter(){ openLens(panelDefenses());
+      $$(".defense-ring").forEach((d,i)=>gsap.to(d,{opacity:1,duration:.5,delay:REDUCED?0:.45*i})); }});
+
+  // numerar beats dentro de su capítulo
+  const count={};
+  B.forEach(b=>{count[b.ch]=(count[b.ch]||0)+1; b.n=count[b.ch];});
+  return B;
+}
+
+/* ---------- 9. ARRANQUE ---------- */
+(async function init(){
+  try{ // detección opcional del backend real (solo informativa)
+    const ctl=new AbortController(); setTimeout(()=>ctl.abort(),1500);
+    const r=await fetch("/api/crypto/public-key",{signal:ctl.signal});
+    if(r.ok){const b=$("#j-badge");b.classList.add("online");b.innerHTML='<i class="fa-solid fa-circle" style="font-size:.5rem"></i> Backend SafeDrop en línea';}
+  }catch(_){}
+  await buildChain();
+  await runPipeline();
+  BEATS=defineBeats();
+  buildTimeline();
+  goTo(0);
+})();
+</script>
+</body>
+</html>

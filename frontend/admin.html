@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -8,6 +9,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
+
 <body>
 
     <div class="app-container">
@@ -20,11 +22,15 @@
                 </a>
                 <nav style="display:flex; align-items:center; gap:1.5rem">
                     <ul class="nav-menu">
-                        <li><a href="index.html" class="nav-link"><i class="fa-solid fa-paper-plane"></i> Enviar Reporte</a></li>
-                        <li><a href="auditor.html" class="nav-link"><i class="fa-solid fa-unlock-keyhole"></i> Auditoría</a></li>
-                        <li><a href="admin.html" class="nav-link active"><i class="fa-solid fa-gears"></i> Gestión</a></li>
-                        <li><a href="docs.html" class="nav-link"><i class="fa-solid fa-file-invoice"></i> Informe Escrito</a></li>
-                        <li><a href="simulator.html" class="nav-link"><i class="fa-solid fa-circle-nodes"></i> ¿Cómo Funciona?</a></li>
+                        <li><a href="index.html" class="nav-link"><i class="fa-solid fa-paper-plane"></i> Enviar
+                                Reporte</a></li>
+                        <li><a href="auditor.html" class="nav-link"><i class="fa-solid fa-unlock-keyhole"></i>
+                                Auditoría</a></li>
+                        <li><a href="admin.html" class="nav-link active"><i class="fa-solid fa-gears"></i> Gestión</a>
+                        </li>
+                        <li><a href="docs.html" class="nav-link"><i class="fa-solid fa-file-invoice"></i> Informe
+                                Escrito</a></li>
+                        <li><a href="journey.html" class="nav-link"><i class="fa-solid fa-clapperboard"></i> ¿Cómo Funciona?</a></li>
                     </ul>
                     <div id="session-info"></div>
                 </nav>
@@ -36,9 +42,11 @@
             <div id="login-form" style="max-width:450px; margin: 4rem auto; display:none">
                 <div class="glass-card">
                     <div style="text-align:center; margin-bottom:2rem">
-                        <i class="fa-solid fa-screwdriver-wrench" style="font-size:2.5rem; color:var(--primary); margin-bottom:1rem"></i>
+                        <i class="fa-solid fa-screwdriver-wrench"
+                            style="font-size:2.5rem; color:var(--primary); margin-bottom:1rem"></i>
                         <h2>Acceso Administrador</h2>
-                        <p style="color:var(--text-muted); font-size:0.9rem">Ingrese con su cuenta administrativa del sistema.</p>
+                        <p style="color:var(--text-muted); font-size:0.9rem">Ingrese con su cuenta administrativa del
+                            sistema.</p>
                     </div>
                     <form>
                         <div class="form-group">
@@ -47,7 +55,8 @@
                         </div>
                         <div class="form-group">
                             <label class="form-label" for="login-password">Contraseña</label>
-                            <input type="password" id="login-password" class="form-control" placeholder="Contraseña de administrador" required>
+                            <input type="password" id="login-password" class="form-control"
+                                placeholder="Contraseña de administrador" required>
                         </div>
                         <button type="submit" class="btn btn-primary btn-block">
                             Ingresar al Panel
@@ -63,22 +72,25 @@
             <!-- Panel de Administración -->
             <div id="admin-panel" class="section">
                 <div class="grid-2">
-                    
+
                     <!-- Columna Izquierda: Gestión de Usuarios RBAC -->
                     <div style="min-width: 0;">
                         <h1>Gestión de Accesos (RBAC)</h1>
-                        <p class="subtitle">Administre los usuarios con privilegios de Auditor y Administrador del sistema.</p>
-                        
+                        <p class="subtitle">Administre los usuarios con privilegios de Auditor y Administrador del
+                            sistema.</p>
+
                         <div class="glass-card">
                             <h3><i class="fa-solid fa-user-plus"></i> Crear Nuevo Usuario</h3>
                             <form id="create-user-form" style="margin-top:1rem">
                                 <div class="form-group">
                                     <label class="form-label" for="new-username">Nombre de Usuario</label>
-                                    <input type="text" id="new-username" class="form-control" required placeholder="Ej. lhuaman">
+                                    <input type="text" id="new-username" class="form-control" required
+                                        placeholder="Ej. lhuaman">
                                 </div>
                                 <div class="form-group">
                                     <label class="form-label" for="new-password">Contraseña</label>
-                                    <input type="password" id="new-password" class="form-control" required placeholder="Contraseña segura">
+                                    <input type="password" id="new-password" class="form-control" required
+                                        placeholder="Contraseña segura">
                                 </div>
                                 <div class="form-group">
                                     <label class="form-label" for="new-role">Rol de Usuario</label>
@@ -87,7 +99,8 @@
                                         <option value="admin">Administrador (Gestión e integridad de bitácora)</option>
                                     </select>
                                 </div>
-                                <button type="submit" class="btn btn-primary btn-block">Crear Usuario Autorizado</button>
+                                <button type="submit" class="btn btn-primary btn-block">Crear Usuario
+                                    Autorizado</button>
                             </form>
                         </div>
 
@@ -97,10 +110,18 @@
                                 <table style="width:100%; border-collapse:collapse; text-align:left">
                                     <thead>
                                         <tr style="border-bottom:1px solid var(--border-color)">
-                                            <th style="padding:0.75rem 1rem; color:var(--text-muted); font-size:0.85rem">ID</th>
-                                            <th style="padding:0.75rem 1rem; color:var(--text-muted); font-size:0.85rem">USUARIO</th>
-                                            <th style="padding:0.75rem 1rem; color:var(--text-muted); font-size:0.85rem">ROL</th>
-                                            <th style="padding:0.75rem 1rem; color:var(--text-muted); font-size:0.85rem">ESTADO</th>
+                                            <th
+                                                style="padding:0.75rem 1rem; color:var(--text-muted); font-size:0.85rem">
+                                                ID</th>
+                                            <th
+                                                style="padding:0.75rem 1rem; color:var(--text-muted); font-size:0.85rem">
+                                                USUARIO</th>
+                                            <th
+                                                style="padding:0.75rem 1rem; color:var(--text-muted); font-size:0.85rem">
+                                                ROL</th>
+                                            <th
+                                                style="padding:0.75rem 1rem; color:var(--text-muted); font-size:0.85rem">
+                                                ESTADO</th>
                                         </tr>
                                     </thead>
                                     <tbody id="user-list">
@@ -112,8 +133,11 @@
 
                         <div class="glass-card">
                             <h3><i class="fa-solid fa-download"></i> Contingencias y Copias de Seguridad (Backups)</h3>
-                            <p style="color:var(--text-muted); font-size:0.85rem; margin-top:0.25rem; margin-bottom:1rem">
-                                Cumpliendo con los procesos de contingencia y recuperación ante desastres o ciberataques, puede respaldar o restaurar la base de datos de denuncias (la cual se encuentra protegida en reposo).
+                            <p
+                                style="color:var(--text-muted); font-size:0.85rem; margin-top:0.25rem; margin-bottom:1rem">
+                                Cumpliendo con los procesos de contingencia y recuperación ante desastres o
+                                ciberataques, puede respaldar o restaurar la base de datos de denuncias (la cual se
+                                encuentra protegida en reposo).
                             </p>
                             <div style="display:flex; gap:0.75rem">
                                 <button id="btn-download-backup" class="btn btn-secondary" style="flex:1">
@@ -130,8 +154,9 @@
                     <!-- Columna Derecha: Trazabilidad y Criptografía de Logs -->
                     <div style="min-width: 0;">
                         <h1>Integridad de Bitácora de Auditoría</h1>
-                        <p class="subtitle">Compruebe y valide la cadena criptográfica encadenada por hashes SHA-256.</p>
-                        
+                        <p class="subtitle">Compruebe y valide la cadena criptográfica encadenada por hashes SHA-256.
+                        </p>
+
                         <!-- Tarjeta de Estado de Integridad -->
                         <div id="integrity-card" class="alert alert-success">
                             Cargando estado de la bitácora...
@@ -147,7 +172,8 @@
                                 </button>
                             </div>
 
-                            <div class="tab-container" style="display:flex; gap:0.5rem; margin-bottom:1rem; border-bottom:1px solid var(--border-color); padding-bottom:0.5rem">
+                            <div class="tab-container"
+                                style="display:flex; gap:0.5rem; margin-bottom:1rem; border-bottom:1px solid var(--border-color); padding-bottom:0.5rem">
                                 <button class="tab-btn active" id="tab-visual">
                                     <i class="fa-solid fa-code-fork"></i> Bitácora Visual (Git-Style)
                                 </button>
@@ -158,34 +184,52 @@
 
                             <!-- Filtros de Bitácora -->
                             <div class="flex flex-wrap gap-2 mb-4 justify-between items-center text-xs">
-                                <span class="text-gray-400 font-semibold uppercase tracking-wider"><i class="fa-solid fa-filter"></i> Filtrar Bitácora:</span>
+                                <span class="text-gray-400 font-semibold uppercase tracking-wider"><i
+                                        class="fa-solid fa-filter"></i> Filtrar Bitácora:</span>
                                 <div class="flex gap-1.5" id="filter-btn-group">
-                                    <button class="px-2.5 py-1 rounded bg-blue-500/10 text-blue-400 border border-blue-500/20 font-medium filter-btn active" data-filter="all">Todos</button>
-                                    <button class="px-2.5 py-1 rounded bg-gray-800 text-gray-400 border border-transparent font-medium filter-btn" data-filter="system">Sistema</button>
-                                    <button class="px-2.5 py-1 rounded bg-gray-800 text-gray-400 border border-transparent font-medium filter-btn" data-filter="admin">Administrador</button>
-                                    <button class="px-2.5 py-1 rounded bg-gray-800 text-gray-400 border border-transparent font-medium filter-btn" data-filter="auditor">Auditor</button>
-                                    <button class="px-2.5 py-1 rounded bg-gray-800 text-red-400/80 border border-transparent font-medium filter-btn" data-filter="compromised">⚠️ Alertados</button>
+                                    <button
+                                        class="px-2.5 py-1 rounded bg-blue-500/10 text-blue-400 border border-blue-500/20 font-medium filter-btn active"
+                                        data-filter="all">Todos</button>
+                                    <button
+                                        class="px-2.5 py-1 rounded bg-gray-800 text-gray-400 border border-transparent font-medium filter-btn"
+                                        data-filter="system">Sistema</button>
+                                    <button
+                                        class="px-2.5 py-1 rounded bg-gray-800 text-gray-400 border border-transparent font-medium filter-btn"
+                                        data-filter="admin">Administrador</button>
+                                    <button
+                                        class="px-2.5 py-1 rounded bg-gray-800 text-gray-400 border border-transparent font-medium filter-btn"
+                                        data-filter="auditor">Auditor</button>
+                                    <button
+                                        class="px-2.5 py-1 rounded bg-gray-800 text-red-400/80 border border-transparent font-medium filter-btn"
+                                        data-filter="compromised">⚠️ Alertados</button>
                                 </div>
                             </div>
 
                             <!-- Contenedor del Grafo Criptográfico Visual -->
                             <div id="panel-visual-graph" style="position:relative">
-                                <div class="flex" style="background:#060913; border-radius:12px; border:1px solid var(--border-color); overflow:hidden; height:500px">
+                                <div class="flex"
+                                    style="background:#060913; border-radius:12px; border:1px solid var(--border-color); overflow:hidden; height:500px">
                                     <!-- Columna Grafo SVG (ancho fijo, barra lateral con scroll sincronizado oculto) -->
-                                    <div id="audit-graph-container" class="flex-none w-[145px] border-r border-[rgba(255,255,255,0.06)] overflow-y-hidden select-none" style="background:#04060d; position:relative">
+                                    <div id="audit-graph-container"
+                                        class="flex-none w-[145px] border-r border-[rgba(255,255,255,0.06)] overflow-y-hidden select-none"
+                                        style="background:#04060d; position:relative">
                                         <!-- SVG del Grafo cargado dinámicamente -->
                                     </div>
-                                    
+
                                     <!-- Columna Tarjetas de Commits (scrollable, derecha) -->
-                                    <div id="audit-cards-container" class="flex-grow overflow-y-auto p-4 space-y-3" style="scroll-behavior:smooth">
+                                    <div id="audit-cards-container" class="flex-grow overflow-y-auto p-4 space-y-3"
+                                        style="scroll-behavior:smooth">
                                         <!-- Tarjetas de commits cargadas dinámicamente -->
                                     </div>
                                 </div>
                                 <div class="audit-tooltip" id="audit-tooltip"></div>
-                                <div style="display:flex; justify-content:space-around; font-size:0.75rem; color:var(--text-muted); margin-top:0.75rem; padding:0.4rem; background:rgba(255,255,255,0.02); border-radius:6px">
+                                <div
+                                    style="display:flex; justify-content:space-around; font-size:0.75rem; color:var(--text-muted); margin-top:0.75rem; padding:0.4rem; background:rgba(255,255,255,0.02); border-radius:6px">
                                     <span><i class="fa-solid fa-circle text-blue-500 mr-1"></i> Sistema / Anónimo</span>
-                                    <span><i class="fa-solid fa-circle text-emerald-500 mr-1"></i> Administración (admin)</span>
-                                    <span><i class="fa-solid fa-circle text-purple-500 mr-1"></i> Auditoría (auditor)</span>
+                                    <span><i class="fa-solid fa-circle text-emerald-500 mr-1"></i> Administración
+                                        (admin)</span>
+                                    <span><i class="fa-solid fa-circle text-purple-500 mr-1"></i> Auditoría
+                                        (auditor)</span>
                                 </div>
                             </div>
 
@@ -211,4 +255,5 @@
     <script src="js/crypto_client.js"></script>
     <script src="js/app_client.js"></script>
 </body>
+
 </html>

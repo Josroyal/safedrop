@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -7,6 +8,7 @@
     <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
+
 <body>
 
     <div class="app-container">
@@ -19,11 +21,14 @@
                 </a>
                 <nav style="display:flex; align-items:center; gap:1.5rem">
                     <ul class="nav-menu">
-                        <li><a href="index.html" class="nav-link"><i class="fa-solid fa-paper-plane"></i> Enviar Reporte</a></li>
-                        <li><a href="auditor.html" class="nav-link active"><i class="fa-solid fa-unlock-keyhole"></i> Auditoría</a></li>
+                        <li><a href="index.html" class="nav-link"><i class="fa-solid fa-paper-plane"></i> Enviar
+                                Reporte</a></li>
+                        <li><a href="auditor.html" class="nav-link active"><i class="fa-solid fa-unlock-keyhole"></i>
+                                Auditoría</a></li>
                         <li><a href="admin.html" class="nav-link"><i class="fa-solid fa-gears"></i> Gestión</a></li>
-                        <li><a href="docs.html" class="nav-link"><i class="fa-solid fa-file-invoice"></i> Informe Escrito</a></li>
-                        <li><a href="simulator.html" class="nav-link"><i class="fa-solid fa-circle-nodes"></i> ¿Cómo Funciona?</a></li>
+                        <li><a href="docs.html" class="nav-link"><i class="fa-solid fa-file-invoice"></i> Informe
+                                Escrito</a></li>
+                        <li><a href="journey.html" class="nav-link"><i class="fa-solid fa-clapperboard"></i> ¿Cómo Funciona?</a></li>
                     </ul>
                     <div id="session-info"></div>
                 </nav>
@@ -35,18 +40,22 @@
             <div id="login-form" style="max-width:450px; margin: 4rem auto; display:none">
                 <div class="glass-card">
                     <div style="text-align:center; margin-bottom:2rem">
-                        <i class="fa-solid fa-user-lock" style="font-size:2.5rem; color:var(--primary); margin-bottom:1rem"></i>
+                        <i class="fa-solid fa-user-lock"
+                            style="font-size:2.5rem; color:var(--primary); margin-bottom:1rem"></i>
                         <h2>Acceso Auditor Autorizado</h2>
-                        <p style="color:var(--text-muted); font-size:0.9rem">Ingrese sus credenciales de sesión protegida para continuar.</p>
+                        <p style="color:var(--text-muted); font-size:0.9rem">Ingrese sus credenciales de sesión
+                            protegida para continuar.</p>
                     </div>
                     <form>
                         <div class="form-group">
                             <label class="form-label" for="login-username">Usuario</label>
-                            <input type="text" id="login-username" class="form-control" placeholder="Nombre de usuario" required>
+                            <input type="text" id="login-username" class="form-control" placeholder="Nombre de usuario"
+                                required>
                         </div>
                         <div class="form-group">
                             <label class="form-label" for="login-password">Contraseña</label>
-                            <input type="password" id="login-password" class="form-control" placeholder="Contraseña de seguridad" required>
+                            <input type="password" id="login-password" class="form-control"
+                                placeholder="Contraseña de seguridad" required>
                         </div>
                         <button type="submit" class="btn btn-primary btn-block">
                             Iniciar Sesión Segura
@@ -63,83 +72,102 @@
             <!-- Dashboard del Auditor (Si está logueado) -->
             <div id="auditor-panel" class="section">
                 <h1>Bandeja de Denuncias Cifradas</h1>
-                <p class="subtitle">Examine y descifre localmente los reportes haciendo uso de la llave privada institucional.</p>
-                
+                <p class="subtitle">Examine y descifre localmente los reportes haciendo uso de la llave privada
+                    institucional.</p>
+
                 <div class="auditor-layout">
                     <!-- Barra lateral: Lista de reportes -->
                     <div>
                         <div class="glass-card" style="padding:1.5rem">
-                            <h3 style="font-size:1.1rem; margin-bottom:1rem"><i class="fa-solid fa-list"></i> Reportes Recibidos</h3>
+                            <h3 style="font-size:1.1rem; margin-bottom:1rem"><i class="fa-solid fa-list"></i> Reportes
+                                Recibidos</h3>
                             <div class="report-list" id="report-list">
                                 <!-- Cargado dinámicamente -->
                                 <div style="color:var(--text-muted); font-size:0.9rem">Cargando denuncias...</div>
                             </div>
                         </div>
                     </div>
-                    
+
                     <!-- Contenido Principal: Detalle y Desencriptación -->
                     <div style="min-width: 0;">
                         <!-- Marcador de posición -->
                         <div class="report-detail-placeholder" id="report-detail-placeholder">
                             <i class="fa-solid fa-file-shield" style="font-size:3rem; margin-bottom:1rem"></i>
                             <h3>Seleccione una denuncia de la lista lateral</h3>
-                            <p style="font-size:0.9rem; color:var(--text-muted)">Deberá cargar su llave privada para poder interpretar los datos.</p>
+                            <p style="font-size:0.9rem; color:var(--text-muted)">Deberá cargar su llave privada para
+                                poder interpretar los datos.</p>
                         </div>
-                        
+
                         <!-- Vista de detalle cifrada -->
                         <div class="report-detail-view" id="report-detail-view">
                             <div class="glass-card">
-                                <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--border-color); padding-bottom:1rem; margin-bottom:1.5rem">
+                                <div
+                                    style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--border-color); padding-bottom:1rem; margin-bottom:1.5rem">
                                     <h2 style="margin:0; font-size:1.5rem" id="det-id">Denuncia #0</h2>
                                     <span style="font-size:0.9rem; color:var(--text-muted)" id="det-date">Fecha</span>
                                 </div>
 
                                 <div class="form-group">
-                                    <label class="form-label" style="color:var(--primary)"><i class="fa-solid fa-key"></i> Llave AES Cifrada (RSA Wrap-Block)</label>
+                                    <label class="form-label" style="color:var(--primary)"><i
+                                            class="fa-solid fa-key"></i> Llave AES Cifrada (RSA Wrap-Block)</label>
                                     <div class="encrypted-block" id="block-key-enc">RSA-OAEP-CipherBlock...</div>
                                 </div>
-                                
+
                                 <div class="form-group">
-                                    <label class="form-label" style="color:var(--primary)"><i class="fa-solid fa-message"></i> Contenido del Reporte Cifrado (AES-GCM Payload)</label>
+                                    <label class="form-label" style="color:var(--primary)"><i
+                                            class="fa-solid fa-message"></i> Contenido del Reporte Cifrado (AES-GCM
+                                        Payload)</label>
                                     <div class="encrypted-block" id="block-text-enc">AES-GCM-CipherPayload...</div>
                                 </div>
 
                                 <!-- Alerta del estado de la llave -->
                                 <div id="key-status-alert" class="alert alert-warning">
-                                    <strong>Llave Privada Requerida (2-of-3 Shares)</strong> Cargue dos fragmentos diferentes para continuar.
+                                    <strong>Llave Privada Requerida (2-of-3 Shares)</strong> Cargue dos fragmentos
+                                    diferentes para continuar.
                                 </div>
 
                                 <!-- Carga de fragmentos de llave (.share) -->
                                 <div class="upload-zone" id="key-dropzone" style="padding:1.5rem; border-style:solid">
-                                    <i class="fa-solid fa-key" style="font-size:1.5rem; color:var(--primary); margin-bottom:0.5rem"></i>
-                                    <h4 style="font-size:0.95rem">Arrastre o seleccione fragmentos de llave (.share)</h4>
-                                    <p style="font-size:0.75rem; color:var(--text-muted); margin-top:0.25rem">Se requiere cargar al menos dos fragmentos distintos para reconstruir la llave RSA en el cliente.</p>
+                                    <i class="fa-solid fa-key"
+                                        style="font-size:1.5rem; color:var(--primary); margin-bottom:0.5rem"></i>
+                                    <h4 style="font-size:0.95rem">Arrastre o seleccione fragmentos de llave (.share)
+                                    </h4>
+                                    <p style="font-size:0.75rem; color:var(--text-muted); margin-top:0.25rem">Se
+                                        requiere cargar al menos dos fragmentos distintos para reconstruir la llave RSA
+                                        en el cliente.</p>
                                     <input type="file" id="key-file-input" style="display:none" accept=".share">
                                 </div>
 
                                 <!-- Acción de descifrado -->
                                 <div id="decrypt-action-container" style="display:none; margin-top:1.5rem">
                                     <button class="btn btn-success btn-block" id="btn-decrypt">
-                                        <i class="fa-solid fa-unlock-keyhole"></i> Descifrar Denuncia Localmente en el Navegador
+                                        <i class="fa-solid fa-unlock-keyhole"></i> Descifrar Denuncia Localmente en el
+                                        Navegador
                                     </button>
                                 </div>
 
                                 <!-- Resultado descifrado -->
                                 <div class="decrypted-content" id="decrypted-report-container" style="display:none">
-                                    <h3 style="color:var(--success); border-bottom:1px solid rgba(16, 185, 129, 0.2); padding-bottom:0.5rem; margin-bottom:1rem">
-                                        <i class="fa-solid fa-envelope-open-text"></i> Contenido Descifrado Exclusivo en Memoria (Navegador)
+                                    <h3
+                                        style="color:var(--success); border-bottom:1px solid rgba(16, 185, 129, 0.2); padding-bottom:0.5rem; margin-bottom:1rem">
+                                        <i class="fa-solid fa-envelope-open-text"></i> Contenido Descifrado Exclusivo en
+                                        Memoria (Navegador)
                                     </h3>
-                                    
+
                                     <div class="form-group">
-                                        <label class="form-label" style="color:var(--success)">Mensaje de la Denuncia:</label>
-                                        <div id="decrypted-text" style="white-space:pre-wrap; background:rgba(255,255,255,0.02); padding:1rem; border-radius:6px; border:1px solid var(--border-color)">
+                                        <label class="form-label" style="color:var(--success)">Mensaje de la
+                                            Denuncia:</label>
+                                        <div id="decrypted-text"
+                                            style="white-space:pre-wrap; background:rgba(255,255,255,0.02); padding:1rem; border-radius:6px; border:1px solid var(--border-color)">
                                             Detalles descifrados...
                                         </div>
                                     </div>
-                                    
+
                                     <div class="form-group" style="margin-bottom:0">
-                                        <label class="form-label" style="color:var(--success)">Evidencias Descifradas:</label>
-                                        <div id="decrypted-files" style="display:flex; flex-direction:column; gap:0.5rem">
+                                        <label class="form-label" style="color:var(--success)">Evidencias
+                                            Descifradas:</label>
+                                        <div id="decrypted-files"
+                                            style="display:flex; flex-direction:column; gap:0.5rem">
                                             <!-- Archivos -->
                                         </div>
                                     </div>
@@ -158,7 +186,8 @@
                     <div class="crypto-circle" style="border-top-color:var(--success)"></div>
                 </div>
                 <h2 style="color:var(--success)">Descifrado Local en Navegador</h2>
-                <p style="color:var(--text-muted); font-size:0.9rem">Procesando criptografía asimétrica y simétrica local...</p>
+                <p style="color:var(--text-muted); font-size:0.9rem">Procesando criptografía asimétrica y simétrica
+                    local...</p>
                 <ul class="crypto-steps">
                     <li class="crypto-step">Importando llave privada RSA del auditor de forma segura...</li>
                     <li class="crypto-step">Descifrando llave de sesión simétrica AES-256 (RSA-OAEP-SHA256)...</li>
@@ -177,4 +206,5 @@
     <script src="js/crypto_client.js"></script>
     <script src="js/app_client.js"></script>
 </body>
+
 </html>

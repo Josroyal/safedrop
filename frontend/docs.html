@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -7,6 +8,7 @@
     <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
+
 <body>
 
     <div class="app-container">
@@ -19,11 +21,14 @@
                 </a>
                 <nav>
                     <ul class="nav-menu">
-                        <li><a href="index.html" class="nav-link"><i class="fa-solid fa-paper-plane"></i> Enviar Reporte</a></li>
-                        <li><a href="auditor.html" class="nav-link"><i class="fa-solid fa-unlock-keyhole"></i> Auditoría</a></li>
+                        <li><a href="index.html" class="nav-link"><i class="fa-solid fa-paper-plane"></i> Enviar
+                                Reporte</a></li>
+                        <li><a href="auditor.html" class="nav-link"><i class="fa-solid fa-unlock-keyhole"></i>
+                                Auditoría</a></li>
                         <li><a href="admin.html" class="nav-link"><i class="fa-solid fa-gears"></i> Gestión</a></li>
-                        <li><a href="docs.html" class="nav-link active"><i class="fa-solid fa-file-invoice"></i> Informe Escrito</a></li>
-                        <li><a href="simulator.html" class="nav-link"><i class="fa-solid fa-circle-nodes"></i> ¿Cómo Funciona?</a></li>
+                        <li><a href="docs.html" class="nav-link active"><i class="fa-solid fa-file-invoice"></i> Informe
+                                Escrito</a></li>
+                        <li><a href="journey.html" class="nav-link"><i class="fa-solid fa-clapperboard"></i> ¿Cómo Funciona?</a></li>
                     </ul>
                 </nav>
             </div>
@@ -32,11 +37,12 @@
         <!-- Contenido de Documentación -->
         <main class="content-area">
             <div class="docs-layout">
-                
+
                 <!-- Sidebar de Navegación del Informe -->
                 <aside class="docs-sidebar">
                     <div class="glass-card" style="padding:1.25rem">
-                        <h3 style="font-size:1.05rem; margin-bottom:1rem; color:var(--text-main)"><i class="fa-solid fa-book-open"></i> Secciones del Informe</h3>
+                        <h3 style="font-size:1.05rem; margin-bottom:1rem; color:var(--text-main)"><i
+                                class="fa-solid fa-book-open"></i> Secciones del Informe</h3>
                         <ul class="docs-menu">
                             <li><a href="#intro" class="docs-menu-link active">1. Contexto y Objetivos</a></li>
                             <li><a href="#theory" class="docs-menu-link">2. Trasfondo Teórico</a></li>
@@ -52,26 +58,42 @@
 
                 <!-- Cuerpo de Documentación -->
                 <section class="docs-body glass-card">
-                    
+
                     <!-- Sección 1: Contexto y Objetivos -->
                     <div id="intro" class="docs-content active">
                         <h2>1. Contexto, Motivación y Objetivos</h2>
                         <h3>1.1 Contexto del Problema</h3>
-                        <p>Actualmente, muchas organizaciones enfrentan problemas relacionados con corrupción interna, abuso de autoridad, filtración de información y acoso laboral. Aunque se cuenta con canales de denuncia, el temor a represalias o a la exposición de la identidad del denunciante por parte de administradores con privilegios elevados limita severamente su efectividad.</p>
-                        <p>Los sistemas tradicionales guardan los datos en texto plano en el backend. Si un atacante compromete el servidor o la base de datos, o si un administrador abusa de sus permisos, el anonimato queda totalmente expuesto. SafeDrop Local responde a esta problemática implementando principios de minimización de confianza y criptografía de conocimiento cero (Zero-Knowledge).</p>
-                        
+                        <p>Actualmente, muchas organizaciones enfrentan problemas relacionados con corrupción interna,
+                            abuso de autoridad, filtración de información y acoso laboral. Aunque se cuenta con canales
+                            de denuncia, el temor a represalias o a la exposición de la identidad del denunciante por
+                            parte de administradores con privilegios elevados limita severamente su efectividad.</p>
+                        <p>Los sistemas tradicionales guardan los datos en texto plano en el backend. Si un atacante
+                            compromete el servidor o la base de datos, o si un administrador abusa de sus permisos, el
+                            anonimato queda totalmente expuesto. SafeDrop Local responde a esta problemática
+                            implementando principios de minimización de confianza y criptografía de conocimiento cero
+                            (Zero-Knowledge).</p>
+
                         <h3>1.2 Motivación</h3>
-                        <p>Demostrar que la criptografía aplicada puede resolver problemas del mundo real relacionados con la privacidad. Al cifrar localmente la información en el navegador del usuario antes de transmitirla, convertimos al servidor en un intermediario ciego que almacena datos cifrados pero es incapaz de interpretarlos.</p>
-                        
+                        <p>Demostrar que la criptografía aplicada puede resolver problemas del mundo real relacionados
+                            con la privacidad. Al cifrar localmente la información en el navegador del usuario antes de
+                            transmitirla, convertimos al servidor en un intermediario ciego que almacena datos cifrados
+                            pero es incapaz de interpretarlos.</p>
+
                         <h3>1.3 Objetivos del Proyecto</h3>
                         <ul>
-                            <li><strong>Objetivo General:</strong> Diseñar e implementar una plataforma web de denuncias anónimas segura mediante criptografía híbrida (AES-GCM y RSA) que proteja la confidencialidad de los reportes.</li>
+                            <li><strong>Objetivo General:</strong> Diseñar e implementar una plataforma web de denuncias
+                                anónimas segura mediante criptografía híbrida (AES-GCM y RSA) que proteja la
+                                confidencialidad de los reportes.</li>
                             <li><strong>Objetivos Específicos:</strong>
                                 <ul>
-                                    <li>Cifrar los reportes y archivos adjuntos en el cliente utilizando AES-GCM de 256 bits.</li>
-                                    <li>Proteger las llaves AES temporales envolviéndolas con RSA-OAEP (2048-bit) empleando la llave pública del servidor.</li>
-                                    <li>Implementar separación de privilegios mediante almacenamiento seguro y local (Cold Storage) de la llave privada.</li>
-                                    <li>Garantizar la integridad de los logs mediante un registro de auditoría encadenado criptográficamente (SHA-256).</li>
+                                    <li>Cifrar los reportes y archivos adjuntos en el cliente utilizando AES-GCM de 256
+                                        bits.</li>
+                                    <li>Proteger las llaves AES temporales envolviéndolas con RSA-OAEP (2048-bit)
+                                        empleando la llave pública del servidor.</li>
+                                    <li>Implementar separación de privilegios mediante almacenamiento seguro y local
+                                        (Cold Storage) de la llave privada.</li>
+                                    <li>Garantizar la integridad de los logs mediante un registro de auditoría
+                                        encadenado criptográficamente (SHA-256).</li>
                                 </ul>
                             </li>
                         </ul>
@@ -82,30 +104,50 @@
                         <h2>2. Trasfondo Teórico</h2>
                         <h3>2.1 Tríada CIA (Confidencialidad, Integridad y Disponibilidad)</h3>
                         <ul>
-                            <li><strong>Confidencialidad:</strong> Protegida mediante el cifrado simétrico AES-GCM en el cliente. La base de datos solo almacena blobs cifrados. El descifrado se realiza exclusivamente en el dispositivo del auditor autorizado usando la llave privada RSA.</li>
-                            <li><strong>Integridad:</strong> La bitácora del sistema utiliza encadenamiento por Hash SHA-256. Cualquier alteración manual o inyección de registros en la base de datos rompe la cadena criptográfica y alerta de inmediato en el panel. AES-GCM también ofrece autenticación cifrada, protegiendo los reportes de modificaciones no autorizadas en tránsito o reposo.</li>
-                            <li><strong>Disponibilidad:</strong> Apoyada por la portabilidad de SQLite, permitiendo respaldos compactos del archivo <code>safedrop.db</code>. Al estar los reportes ya cifrados, las copias de seguridad se pueden almacenar en servidores remotos o nubes públicas sin riesgo de fuga de información.</li>
+                            <li><strong>Confidencialidad:</strong> Protegida mediante el cifrado simétrico AES-GCM en el
+                                cliente. La base de datos solo almacena blobs cifrados. El descifrado se realiza
+                                exclusivamente en el dispositivo del auditor autorizado usando la llave privada RSA.
+                            </li>
+                            <li><strong>Integridad:</strong> La bitácora del sistema utiliza encadenamiento por Hash
+                                SHA-256. Cualquier alteración manual o inyección de registros en la base de datos rompe
+                                la cadena criptográfica y alerta de inmediato en el panel. AES-GCM también ofrece
+                                autenticación cifrada, protegiendo los reportes de modificaciones no autorizadas en
+                                tránsito o reposo.</li>
+                            <li><strong>Disponibilidad:</strong> Apoyada por la portabilidad de SQLite, permitiendo
+                                respaldos compactos del archivo <code>safedrop.db</code>. Al estar los reportes ya
+                                cifrados, las copias de seguridad se pueden almacenar en servidores remotos o nubes
+                                públicas sin riesgo de fuga de información.</li>
                         </ul>
 
                         <h3>2.2 Defensa en Profundidad</h3>
                         <p>El sistema implementa protección multinivel:</p>
                         <ol>
-                            <li><strong>Seguridad en Tránsito:</strong> Comunicación protegida por HTTPS/TLS para evitar interceptación.</li>
-                            <li><strong>Seguridad en Reposo:</strong> Los payloads de reportes y archivos adjuntos se almacenan cifrados en base de datos.</li>
-                            <li><strong>Seguridad de Accesos:</strong> Gestión de roles (RBAC) con JWT y contraseñas protegidas con el algoritmo Argon2id (más resistente a fuerza bruta que SHA-256 simple o bcrypt).</li>
-                            <li><strong>Separación de Llaves:</strong> Almacenamiento fuera de línea (Cold Storage) de la llave privada de descifrado.</li>
+                            <li><strong>Seguridad en Tránsito:</strong> Comunicación protegida por HTTPS/TLS para evitar
+                                interceptación.</li>
+                            <li><strong>Seguridad en Reposo:</strong> Los payloads de reportes y archivos adjuntos se
+                                almacenan cifrados en base de datos.</li>
+                            <li><strong>Seguridad de Accesos:</strong> Gestión de roles (RBAC) con JWT y contraseñas
+                                protegidas con el algoritmo Argon2id (más resistente a fuerza bruta que SHA-256 simple o
+                                bcrypt).</li>
+                            <li><strong>Separación de Llaves:</strong> Almacenamiento fuera de línea (Cold Storage) de
+                                la llave privada de descifrado.</li>
                         </ol>
 
                         <h3>2.3 Criptografía Híbrida</h3>
-                        <p>Combina la rapidez de la criptografía simétrica (AES-GCM 256 bits) para cifrar datos voluminosos como texto y archivos adjuntos, con la seguridad de la criptografía asimétrica (RSA-OAEP 2048 bits con hash SHA-256) para proteger la llave simétrica AES temporal, permitiendo la recepción segura de reportes sin requerir que el cliente conozca un secreto compartido previo.</p>
+                        <p>Combina la rapidez de la criptografía simétrica (AES-GCM 256 bits) para cifrar datos
+                            voluminosos como texto y archivos adjuntos, con la seguridad de la criptografía asimétrica
+                            (RSA-OAEP 2048 bits con hash SHA-256) para proteger la llave simétrica AES temporal,
+                            permitiendo la recepción segura de reportes sin requerir que el cliente conozca un secreto
+                            compartido previo.</p>
                     </div>
 
                     <!-- Sección 3: Arquitectura -->
                     <div id="architecture" class="docs-content">
                         <h2>3. Arquitectura y Criptografía de la Solución</h2>
                         <p>El flujo principal de datos y su protección criptográfica se detalla a continuación:</p>
-                        
-                        <div style="background:var(--bg-input); padding:1rem; border-radius:8px; border:1px solid var(--border-color); font-family:var(--font-mono); font-size:0.85rem; margin-bottom:1.5rem">
+
+                        <div
+                            style="background:var(--bg-input); padding:1rem; border-radius:8px; border:1px solid var(--border-color); font-family:var(--font-mono); font-size:0.85rem; margin-bottom:1.5rem">
                             [Denunciante (Navegador)] <br>
                             &nbsp;&nbsp;│<br>
                             &nbsp;&nbsp;├── 1. Genera llave AES-GCM temporal y aleatoria.<br>
@@ -116,23 +158,30 @@
                             [Servidor HTTPS (API FastAPI)]<br>
                             &nbsp;&nbsp;│<br>
                             &nbsp;&nbsp;├── 5. Almacena los bloques cifrados en SQLite (safedrop.db).<br>
-                            &nbsp;&nbsp;└── 6. Registra la actividad encadenando el hash SHA-256 del registro previo.<br>
+                            &nbsp;&nbsp;└── 6. Registra la actividad encadenando el hash SHA-256 del registro
+                            previo.<br>
                             &nbsp;&nbsp;↓<br>
                             [Auditor (Navegador / Dispositivo Seguro)]<br>
                             &nbsp;&nbsp;│<br>
                             &nbsp;&nbsp;├── 7. Obtiene los bloques cifrados de la API (Autorizado por JWT).<br>
-                            &nbsp;&nbsp;├── 8. Carga al menos 2 fragmentos distintos (.share) de la llave privada RSA.<br>
-                            &nbsp;&nbsp;├── 9. Reconstruye la llave privada RSA en RAM mediante interpolación de Lagrange (Shamir's Secret Sharing).<br>
+                            &nbsp;&nbsp;├── 8. Carga al menos 2 fragmentos distintos (.share) de la llave privada
+                            RSA.<br>
+                            &nbsp;&nbsp;├── 9. Reconstruye la llave privada RSA en RAM mediante interpolación de
+                            Lagrange (Shamir's Secret Sharing).<br>
                             &nbsp;&nbsp;└── 10. Descifra la llave AES y obtiene el reporte plano en local.<br>
                         </div>
-                        
+
                         <h3>Especificaciones Técnicas:</h3>
                         <ul>
-                            <li><strong>Cifrado Simétrico:</strong> AES-GCM (256-bit) con IVs aleatorios de 12 bytes por archivo/texto.</li>
+                            <li><strong>Cifrado Simétrico:</strong> AES-GCM (256-bit) con IVs aleatorios de 12 bytes por
+                                archivo/texto.</li>
                             <li><strong>Cifrado Asimétrico:</strong> RSA-OAEP con padding SHA-256 de 2048 bits.</li>
-                            <li><strong>División de Confianza:</strong> Shamir's Secret Sharing (2-of-3) sobre el Campo de Galois $GF(256)$ en JavaScript y Python.</li>
-                            <li><strong>Derivación de Hash de Auditoría:</strong> SHA-256 encadenado secuencialmente.</li>
-                            <li><strong>Protección de Credenciales de Acceso:</strong> Hashing de contraseñas mediante Argon2id.</li>
+                            <li><strong>División de Confianza:</strong> Shamir's Secret Sharing (2-of-3) sobre el Campo
+                                de Galois $GF(256)$ en JavaScript y Python.</li>
+                            <li><strong>Derivación de Hash de Auditoría:</strong> SHA-256 encadenado secuencialmente.
+                            </li>
+                            <li><strong>Protección de Credenciales de Acceso:</strong> Hashing de contraseñas mediante
+                                Argon2id.</li>
                         </ul>
                     </div>
 
@@ -140,7 +189,7 @@
                     <div id="risks" class="docs-content">
                         <h2>4. Modelado de Amenazas e Identificación de Riesgos</h2>
                         <p>Identificación de riesgos clave en la implementación y almacenamiento de datos:</p>
-                        
+
                         <table class="docs-table">
                             <thead>
                                 <tr>
@@ -153,17 +202,20 @@
                                 <tr>
                                     <td><strong>Compromiso Completo del Servidor / DB</strong></td>
                                     <td>Organización, Auditor, Denunciante</td>
-                                    <td>Cifrado de origen. El atacante solo obtiene blobs cifrados e ilegibles sin la llave privada.</td>
+                                    <td>Cifrado de origen. El atacante solo obtiene blobs cifrados e ilegibles sin la
+                                        llave privada.</td>
                                 </tr>
                                 <tr>
                                     <td><strong>Pérdida / Robo de Llave Privada RSA</strong></td>
                                     <td>Organización (Pérdida de historial de reportes)</td>
-                                    <td>Almacenamiento de respaldo en física (Cold Storage) mediante custodios autorizados.</td>
+                                    <td>Almacenamiento de respaldo en física (Cold Storage) mediante custodios
+                                        autorizados.</td>
                                 </tr>
                                 <tr>
                                     <td><strong>Alteración Directa de Bitácora por Admin Malicioso</strong></td>
                                     <td>Organización, Auditoría de Cumplimiento</td>
-                                    <td>Bitácora encadenada por hashes SHA-256. Cualquier eliminación o alteración rompe la cadena.</td>
+                                    <td>Bitácora encadenada por hashes SHA-256. Cualquier eliminación o alteración rompe
+                                        la cadena.</td>
                                 </tr>
                                 <tr>
                                     <td><strong>Ataques Man-in-the-Middle (Sniffing)</strong></td>
@@ -173,7 +225,8 @@
                                 <tr>
                                     <td><strong>Fuga de Datos Personales en Texto Libre</strong></td>
                                     <td>Denunciante</td>
-                                    <td>Advertencias preventivas en la interfaz y minimización de metadatos (no IPs, no User-Agents).</td>
+                                    <td>Advertencias preventivas en la interfaz y minimización de metadatos (no IPs, no
+                                        User-Agents).</td>
                                 </tr>
                             </tbody>
                         </table>
@@ -183,35 +236,49 @@
                     <div id="incident" class="docs-content">
                         <h2>5. Plan de Respuesta ante Incidentes de Seguridad</h2>
                         <p>Procedimiento básico para la gestión de incidentes en SafeDrop Local:</p>
-                        
+
                         <h3>Fase 1: Identificación y Contención</h3>
                         <ul>
-                            <li>Si se detecta que la verificación de integridad criptográfica en <code>admin.html</code> falla, se asume un ataque a la integridad de la base de datos.</li>
-                            <li><strong>Acción Inmediata:</strong> Detener temporalmente el servidor web para evitar la persistencia de nuevos datos alterados y aislar el servidor SQLite.</li>
+                            <li>Si se detecta que la verificación de integridad criptográfica en <code>admin.html</code>
+                                falla, se asume un ataque a la integridad de la base de datos.</li>
+                            <li><strong>Acción Inmediata:</strong> Detener temporalmente el servidor web para evitar la
+                                persistencia de nuevos datos alterados y aislar el servidor SQLite.</li>
                         </ul>
 
                         <h3>Fase 2: Erradicación y Recuperación</h3>
                         <ul>
-                            <li>Revisar los archivos de registro del servidor para identificar el vector de acceso no autorizado.</li>
-                            <li>Restaurar la base de datos <code>safedrop.db</code> a partir de la copia de seguridad cifrada más reciente que pase las pruebas de integridad criptográfica.</li>
+                            <li>Revisar los archivos de registro del servidor para identificar el vector de acceso no
+                                autorizado.</li>
+                            <li>Restaurar la base de datos <code>safedrop.db</code> a partir de la copia de seguridad
+                                cifrada más reciente que pase las pruebas de integridad criptográfica.</li>
                         </ul>
 
                         <h3>Fase 3: Gestión ante Compromiso de Llave Privada</h3>
                         <ul>
-                            <li>En caso de sospecha de compromiso de la llave privada RSA organizacional, se debe revocar de inmediato su uso.</li>
-                            <li>Se generará un nuevo par de llaves RSA. La llave pública nueva se cargará en el servidor para los nuevos reportes.</li>
-                            <li>Las denuncias previas a la fecha del incidente deberán ser descifradas y migradas a la nueva llave por el auditor en un ambiente fuera de línea aislado.</li>
+                            <li>En caso de sospecha de compromiso de la llave privada RSA organizacional, se debe
+                                revocar de inmediato su uso.</li>
+                            <li>Se generará un nuevo par de llaves RSA. La llave pública nueva se cargará en el servidor
+                                para los nuevos reportes.</li>
+                            <li>Las denuncias previas a la fecha del incidente deberán ser descifradas y migradas a la
+                                nueva llave por el auditor en un ambiente fuera de línea aislado.</li>
                         </ul>
                     </div>
 
                     <!-- Sección 6: Consideraciones Éticas -->
                     <div id="ethics" class="docs-content">
                         <h2>6. Consideraciones Éticas y de Privacidad</h2>
-                        <p>Éticamente, un sistema de denuncias anónimas tiene la responsabilidad moral de salvaguardar al informante contra represalias. SafeDrop Local adopta un diseño ético proactivo:</p>
+                        <p>Éticamente, un sistema de denuncias anónimas tiene la responsabilidad moral de salvaguardar
+                            al informante contra represalias. SafeDrop Local adopta un diseño ético proactivo:</p>
                         <ul>
-                            <li><strong>Privacidad por Diseño (Privacy by Design):</strong> No se solicita registro, correo electrónico ni datos personales para reportar.</li>
-                            <li><strong>Minimización de Metadatos:</strong> La API no registra direcciones IP, navegadores utilizados (User-Agents) ni geolocalización de las peticiones de envío. El anonimato es técnico, no declarativo.</li>
-                            <li><strong>Criptografía en el Cliente como Empoderamiento del Usuario:</strong> Trasladar el procesamiento criptográfico al navegador del denunciante elimina la necesidad de depositar fe ciega en los administradores del servidor. La seguridad está garantizada por las leyes de las matemáticas criptográficas, no por las promesas corporativas.</li>
+                            <li><strong>Privacidad por Diseño (Privacy by Design):</strong> No se solicita registro,
+                                correo electrónico ni datos personales para reportar.</li>
+                            <li><strong>Minimización de Metadatos:</strong> La API no registra direcciones IP,
+                                navegadores utilizados (User-Agents) ni geolocalización de las peticiones de envío. El
+                                anonimato es técnico, no declarativo.</li>
+                            <li><strong>Criptografía en el Cliente como Empoderamiento del Usuario:</strong> Trasladar
+                                el procesamiento criptográfico al navegador del denunciante elimina la necesidad de
+                                depositar fe ciega en los administradores del servidor. La seguridad está garantizada
+                                por las leyes de las matemáticas criptográficas, no por las promesas corporativas.</li>
                         </ul>
                     </div>
 
@@ -220,17 +287,30 @@
                         <h2>7. Recomendaciones de Protección de Datos Futura</h2>
                         <p>Medidas altamente recomendables para versiones de producción avanzadas:</p>
                         <ol>
-                            <li><strong>Esquemas de Firma Multiusuario y Multi-Nube:</strong> Dado que el prototipo actual ya implementa con éxito la división criptográfica de llave privada (Shamir's Secret Sharing 2-of-3) para evitar el descifrado unilateral, se recomienda a futuro automatizar la distribución de los fragmentos generados a través de servicios de almacenamiento cloud independientes (ej. AWS, Azure, Google Cloud) pertenecientes a distintas áreas administrativas.</li>
-                            <li><strong>Módulos de Seguridad de Hardware (HSM):</strong> Almacenar la llave privada en un dispositivo criptográfico físico (como YubiKey o HSM en la nube) que impida la exportación de la llave y realice el descifrado dentro del chip seguro tras la autenticación multifactor.</li>
-                            <li><strong>Firmas Criptográficas de Recibo:</strong> Entregar al denunciante un recibo firmado criptográficamente por la organización (usando la llave privada de la organización) para constatar de forma inmutable la recepción del reporte sin revelar su identidad.</li>
+                            <li><strong>Esquemas de Firma Multiusuario y Multi-Nube:</strong> Dado que el prototipo
+                                actual ya implementa con éxito la división criptográfica de llave privada (Shamir's
+                                Secret Sharing 2-of-3) para evitar el descifrado unilateral, se recomienda a futuro
+                                automatizar la distribución de los fragmentos generados a través de servicios de
+                                almacenamiento cloud independientes (ej. AWS, Azure, Google Cloud) pertenecientes a
+                                distintas áreas administrativas.</li>
+                            <li><strong>Módulos de Seguridad de Hardware (HSM):</strong> Almacenar la llave privada en
+                                un dispositivo criptográfico físico (como YubiKey o HSM en la nube) que impida la
+                                exportación de la llave y realice el descifrado dentro del chip seguro tras la
+                                autenticación multifactor.</li>
+                            <li><strong>Firmas Criptográficas de Recibo:</strong> Entregar al denunciante un recibo
+                                firmado criptográficamente por la organización (usando la llave privada de la
+                                organización) para constatar de forma inmutable la recepción del reporte sin revelar su
+                                identidad.</li>
                         </ol>
                     </div>
 
                     <!-- Sección 8: Análisis SAST -->
                     <div id="sast" class="docs-content">
                         <h2>8. Análisis de Seguridad SAST (Estático)</h2>
-                        <p>Para asegurar que la implementación cumple con altos estándares de seguridad y está libre de vulnerabilidades comunes de ciberseguridad en Python, se aplicó la herramienta SAST <strong>Bandit</strong> sobre el código del backend.</p>
-                        
+                        <p>Para asegurar que la implementación cumple con altos estándares de seguridad y está libre de
+                            vulnerabilidades comunes de ciberseguridad en Python, se aplicó la herramienta SAST
+                            <strong>Bandit</strong> sobre el código del backend.</p>
+
                         <div id="sast-loader" style="text-align:center; padding:2rem">
                             <i class="fa-solid fa-spinner fa-spin" style="font-size:2rem; color:var(--primary)"></i>
                             <p style="margin-top:1rem">Cargando reporte de análisis SAST de Bandit...</p>
@@ -240,14 +320,20 @@
                             <div class="alert alert-success" style="margin-bottom:1.5rem">
                                 <strong>✓ Reporte SAST Limpio de Vulnerabilidades de Alta Gravedad.</strong>
                             </div>
-                            <pre style="background:#060913; font-family:var(--font-mono); font-size:0.8rem; padding:1.25rem; border-radius:8px; border:1px solid var(--border-color); overflow-x:auto; max-height:400px; color:#10b981" id="sast-output">
+                            <pre style="background:#060913; font-family:var(--font-mono); font-size:0.8rem; padding:1.25rem; border-radius:8px; border:1px solid var(--border-color); overflow-x:auto; max-height:400px; color:#10b981"
+                                id="sast-output">
 # Cargando output del escaneo...
                             </pre>
                             <h3 style="margin-top:1.5rem">Interpretación de Resultados del Análisis:</h3>
                             <ul>
-                                <li><strong>Sin inyecciones SQL (B608):</strong> El uso de SQLAlchemy ORM previene inyecciones SQL al parametrizar automáticamente todas las consultas.</li>
-                                <li><strong>Sin contraseñas harcodeadas (B105):</strong> No existen credenciales codificadas en el backend; las llaves de encriptación y contraseñas de demostración se generan de manera dinámica o mediante variables de entorno.</li>
-                                <li><strong>Criptografía Segura (B303):</strong> El uso de algoritmos modernos como AES-GCM y RSA-OAEP con hashes SHA-256 asegura resistencia ante criptoanálisis (se evitaron hashes obsoletos como MD5 o SHA-1).</li>
+                                <li><strong>Sin inyecciones SQL (B608):</strong> El uso de SQLAlchemy ORM previene
+                                    inyecciones SQL al parametrizar automáticamente todas las consultas.</li>
+                                <li><strong>Sin contraseñas harcodeadas (B105):</strong> No existen credenciales
+                                    codificadas en el backend; las llaves de encriptación y contraseñas de demostración
+                                    se generan de manera dinámica o mediante variables de entorno.</li>
+                                <li><strong>Criptografía Segura (B303):</strong> El uso de algoritmos modernos como
+                                    AES-GCM y RSA-OAEP con hashes SHA-256 asegura resistencia ante criptoanálisis (se
+                                    evitaron hashes obsoletos como MD5 o SHA-1).</li>
                             </ul>
                         </div>
                     </div>
@@ -272,7 +358,7 @@
                 document.getElementById("sast-loader").style.display = "none";
                 const container = document.getElementById("sast-report-container");
                 container.style.display = "block";
-                
+
                 const output = `[bandit] Run started: 2026-06-30 22:45:12
 
 Test results:
@@ -304,4 +390,5 @@ Run metrics:
         });
     </script>
 </body>
+
 </html>
