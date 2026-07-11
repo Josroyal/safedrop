@@ -1,6 +1,7 @@
 import os
 import datetime
 import hashlib
+import re
 from sqlalchemy import create_engine, Column, Integer, String, DateTime, ForeignKey, Boolean, Text
 from sqlalchemy.orm import declarative_base, sessionmaker, relationship
 
@@ -149,6 +150,17 @@ def verify_audit_trail_integrity(db) -> tuple[bool, list[dict]]:
         hash_valid = (log.current_hash == calculated_hash)
         record_valid = chain_valid and hash_valid
         
+        # 3. Validar integridad cruzada (Cross-Reference) para los reportes
+        log_details = log.details
+        if log.action == "REPORT_SUBMITTED":
+            match = re.search(r'ID (\d+)', log.details)
+            if match:
+                report_id = int(match.group(1))
+                report_exists = db.query(Report).filter(Report.id == report_id).first()
+                if not report_exists:
+                    record_valid = False
+                    log_details = f"[✗ REPORTE ELIMINADO/FALTANTE] {log.details}"
+        
         if not record_valid:
             integrity_intact = False
             
@@ -157,7 +169,7 @@ def verify_audit_trail_integrity(db) -> tuple[bool, list[dict]]:
             "timestamp": log.timestamp.strftime('%Y-%m-%d %H:%M:%S'),
             "action": log.action,
             "username": log.username or "Anónimo",
-            "details": log.details,
+            "details": log_details,
             "previous_hash": log.previous_hash,
             "current_hash": log.current_hash,
             "calculated_hash": calculated_hash,

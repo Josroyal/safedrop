@@ -610,6 +610,7 @@ function initAdminDashboard() {
     const userListEl = document.getElementById("user-list");
     const btnVerify = document.getElementById("btn-verify-integrity");
     const btnTamper = document.getElementById("btn-simulate-tampering");
+    const btnSimulateDeleteReport = document.getElementById("btn-simulate-delete-report");
     const createUserForm = document.getElementById("create-user-form");
     
     // Elementos de Pestañas
@@ -1205,6 +1206,25 @@ function initAdminDashboard() {
                     headers: getAuthHeaders()
                 });
                 if (!res.ok) throw new Error("Error al simular alteración.");
+                const data = await res.json();
+                alert(data.message);
+                loadAuditLogs();
+            } catch (err) {
+                alert(err.message);
+            }
+        });
+    }
+    
+    // Simular borrado de reporte
+    if (btnSimulateDeleteReport) {
+        btnSimulateDeleteReport.addEventListener("click", async () => {
+            if (!confirm("¿Está seguro de querer eliminar el último reporte de la base de datos? Esto simulará un ataque de borrado físico saltándose la API.")) return;
+            try {
+                const res = await fetch(`${API_BASE}/api/audit/simulate-delete-report`, {
+                    method: "POST",
+                    headers: getAuthHeaders()
+                });
+                if (!res.ok) throw new Error("Error al simular borrado de reporte.");
                 const data = await res.json();
                 alert(data.message);
                 loadAuditLogs();

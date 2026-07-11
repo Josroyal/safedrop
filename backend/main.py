@@ -299,6 +299,32 @@ def get_audit_logs(
         "logs": log_details
     }
 
+@app.post("/api/audit/simulate-delete-report")
+def simulate_delete_report(
+    current_user: User = Depends(RoleChecker(["admin"])),
+    db: Session = Depends(get_db)
+):
+    """
+    Simula la eliminación maliciosa de un reporte directamente de la base de datos
+    (saltándose la API), para probar la alerta de integridad cruzada.
+    """
+    target_report = db.query(Report).order_by(Report.id.desc()).first()
+    if not target_report:
+        raise HTTPException(status_code=400, detail="No hay reportes para eliminar.")
+        
+    db.delete(target_report)
+    db.commit()
+    
+    # Registramos que el admin activó el ataque de prueba (esto no rompe la cadena, la ruptura la detecta el check)
+    add_audit_log(
+        db,
+        action="TAMPER_SIMULATION_TRIGGERED",
+        user_id=current_user.id,
+        username=current_user.username,
+        details="Simulación de Ataque: Se eliminó un reporte físicamente de SQLite."
+    )
+    return {"status": "success", "message": "Reporte eliminado silenciosamente de la DB."}
+
 @app.post("/api/audit/simulate-tampering")
 def simulate_tampering(
     current_user: User = Depends(RoleChecker(["admin"])),
